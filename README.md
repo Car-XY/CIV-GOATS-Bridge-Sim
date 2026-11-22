@@ -7,7 +7,7 @@ hi!
 ## Necessary information for building the sim
 
 ### Bridge:
-1. **Bridge length:** $`1250\text{--}1270\,\text{mm}`$
+1. **Bridge length:** $`1250\text{–}1270\,\text{mm}`$
 2. **Distance between supports:** $`1200\,\text{mm}`$
 3. **Height of deck above supports:** $`<200\,\text{mm}`$
     - Height of deck above supports must be an integer multiple of $`20\,\text{mm}`$
@@ -47,4 +47,28 @@ hi!
     1. Shear strength: Up to $`2\,\text{MPa}`$ if properly cured ($`>3`$ days)
 
 ## Requirements For Bridge Simulator
-TBD
+> (more TBD)
+
+### Parameters
+
+**Cross-section:**
+- Width
+- Height
+- Glue tab width (deck to web)
+- Folded-down deck edge length
+
+**Diaphragm:**
+- Number of diaphragms evenly spaced between
+- Number of diaphragms over splice
+- Diaphragm glue tab width
+
+**Outputs and Constraints:**
+- Predicted failure load
+- Type and location of failure
+- Matboard area used
+- Bonded glue area
+- Bridge mass and strength to weight ratio
+
+**Other:**
+- Bridge length
+- Location of splice
