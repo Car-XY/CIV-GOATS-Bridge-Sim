@@ -221,9 +221,29 @@ def factors_of_safety(S_top, S_bot, T_cent, T_glue, S_tens, S_comp, T_max, T_gma
 
 def failure_load(FOS_tens, FOS_comp, FOS_shear, FOS_glue,
                  FOS_buck1, FOS_buck2, FOS_buck3, FOS_buckV):
-    minFOS = ...
-    Pf = ...
-    return minFOS, Pf
+    FOS = {"tension": FOS_tens,
+           "compression": FOS_comp,
+           "shear": FOS_shear,
+           "glue": FOS_glue,
+           "buckling in the middle flange": FOS_buck1,
+           "buckling in the side flanges": FOS_buck2,
+           "buckling in the webs": FOS_buck3,
+           "shear buckling": FOS_buckV}
+    minFOS = float('inf')
+    weakest = None
+    for type in FOS:
+        m = np.min(FOS[type])
+        if m < minFOS:
+            minFOS = m
+            weakest = type
+    Pf = minFOS * P
+    x_fail = x[np.argmin(FOS[weakest])]
+    
+    return minFOS, Pf, weakest, x_fail
+
+    # note: these are not from the matlab skeleton,
+    # weakest is a string containing the TYPE of the failure load (ie. "FOS_comp")
+    # x is position at which this failure load occurs
 
 ############################## matlab sec. 8 ##############################
 # 8. Vfail and Mfail
