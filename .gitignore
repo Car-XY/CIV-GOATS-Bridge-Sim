@@ -22,7 +22,7 @@ venv/
 *.dvi
 *.xdv
 *-converted-to.*
-.pdf
+*.pdf
 *.bbl
 *.bbl-SAVE-ERROR
 *.bcf
