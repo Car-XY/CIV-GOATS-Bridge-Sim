@@ -1,3 +1,4 @@
+import sys # command line arguments
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -188,17 +189,16 @@ def applied_stress(SFD, BMD, ybot, ytop, I, Qcent, Qglue, tw, bg):
 def capacities(bft, tft, tw, hw, sw, a, ytop):
     E = E_MAT
     mu = NU_MAT
-    S_tens = ...
-    S_comp = ...
-    T_max = ...
-    T_gmax = ...
-    S_buck1 = ...
-    S_buck2 = ...
-    S_buck3 = ...
-    T_buck = ...
+    S_tens = SIGMA_T
+    S_comp = SIGMA_C
+    T_max = TAU_M
+    T_gmax = TAU_GLUE
+    buck_const = np.pi ** 2 * E / (12 * (1 - mu ** 2))
+    S_buck1 = 4 * buck_const * (tft / sw) ** 2
+    S_buck2 = 0.425 * buck_const * (2 * tft / (bft - sw)) ** 2
+    S_buck3 = 6 * buck_const * (tw / (ytop - tft)) ** 2
+    T_buck = 5 * buck_const * ((tw / hw) ** 2 + (tw / a) ** 2)
     return S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck
-
-    # NOTE: Currently unfinished. 
 
 ############################## matlab sec. 6 ##############################
 # 6. FOS
@@ -248,34 +248,68 @@ def failure_load(FOS_tens, FOS_comp, FOS_shear, FOS_glue,
 ############################## matlab sec. 8 ##############################
 # 8. Vfail and Mfail
 
-def failure_envelopes(SFD, BMD, FOS_tens, FOS_comp, FOS_shear, FOS_glue,
-                      FOS_buck1, FOS_buck2, FOS_buck3, FOS_buckV):
-    Mf_tens = ...
-    Mf_comp = ...
-    Vf_shear = ...
-    Vf_glue = ...
-    Mf_buck1 = ...
-    Mf_buck2 = ...
-    Mf_buck3 = ...
-    Vf_buckV = ...
-    return (Mf_tens, Mf_comp, Vf_shear, Vf_glue,
-            Mf_buck1, Mf_buck2, Mf_buck3, Vf_buckV)
+def failure_envelopes(S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck, I, ybot, ytop, Qcent, Qglue, tw, bg):
+    Mf_tens = S_tens * I / ybot
+    Mf_comp = S_comp * I / ytop
+    Vf_shear = T_max * I * 2 * tw / Qcent
+    Vf_glue = T_gmax * I * 2 * (bg + tw) / Qglue
+    Mf_buck1 = S_buck1 * I / ytop
+    Mf_buck2 = S_buck2 * I / ytop
+    Mf_buck3 = S_buck3 * I / ytop
+    Vf_buckV = T_buck * I * 2 * tw / Qcent
+    return Mf_tens, Mf_comp, Vf_shear, Vf_glue, Mf_buck1, Mf_buck2, Mf_buck3, Vf_buckV
 
 ############################## matlab sec. 9 ##############################
 # 9. Output plots of Vfail and Mfail
 
-def output_plots(x, SFD, SFDi, Vf_shear):
-    plt.subplot(2, 3, 1)
-    plt.grid(True); plt.minorticks_on(); plt.grid(True, which="minor")
-    plt.plot(x, Vf_shear, "r")
-    plt.plot(x, -Vf_shear * SFD, "r")
-    plt.plot(x, SFDi.T, "k")
+# draws a shear subplot
+def shear_subplot(pos, x, SFDi, Vf, label, title=None, every=100):
+    plt.subplot(2, 3, pos)
+    plt.grid(True, alpha=0.3); plt.minorticks_on()
+    plt.grid(True, which="minor", linestyle=":", alpha=0.2)
+    plt.plot(x, Vf, "r", label=label)
+    plt.plot(x, -Vf, "r")
+    plt.plot(x, SFDi[::every].T, "k", linewidth=0.6)
     plt.plot([0, L], [0, 0], "k", linewidth=2)
-    plt.legend(["Matboard Shear Failure"])
+    plt.legend(loc="best")
     plt.xlabel("Distance along bridge (mm)")
     plt.ylabel("Shear Force (N)")
+    if title:
+        plt.title(title, fontweight="bold")
+
+# draws a moment subplot
+def moment_subplot(pos, x, BMDi, Mfs, labels, title=None, every=100):
+    plt.subplot(2, 3, pos)
+    plt.grid(True, alpha=0.3); plt.minorticks_on()
+    plt.grid(True, which="minor", linestyle=":", alpha=0.2)
+    for Mf, label, colour in zip(Mfs, labels, ["r", "b"]):
+        plt.plot(x, Mf, colour, label=label)
+    plt.plot(x, BMDi[::every].T, "k", linewidth=0.6)
+    plt.plot([0, L], [0, 0], "k", linewidth=2)
+    plt.gca().invert_yaxis()
+    plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+    plt.legend(loc="best")
+    plt.xlabel("Distance along bridge (mm)")
+    plt.ylabel("Bending Moment (Nmm)")
+    if title:
+        plt.title(title, fontweight="bold")
+
+# draws the subplots shown below matlab pseudocode
+def output_plots(x, SFDi, BMDi, Mf_tens, Mf_comp, Vf_shear, Vf_glue, Mf_buck1, Mf_buck2, Mf_buck3, Vf_buckV, filename=None):
+    plt.figure(figsize=(16, 9))
+
+    shear_subplot(1, x, SFDi, Vf_shear, "Matboard Shear Failure")
+    shear_subplot(2, x, SFDi, Vf_glue, "Glue Shear Failure", "Shear Force Diagram vs Shear Force Capacities")
+    shear_subplot(3, x, SFDi, Vf_buckV, "Matboard Shear Buckling Failure")
+
+    moment_subplot(4, x, BMDi, [Mf_tens, Mf_comp], ["Matboard Tension Failure", "Matboard Compression Failure"])
+    moment_subplot(5, x, BMDi, [Mf_buck1, Mf_buck2], ["Matboard Buckling Failure, Top Flange - Mid", "Matboard Buckling Failure, Top Flange - Sides"], "Bending Moment Diagram vs Bending Moment Capacities")
+    moment_subplot(6, x, BMDi, [Mf_buck3], ["Matboard Buckling Failure, Webs"])
+
+    plt.tight_layout()
+    if filename:
+        plt.savefig(filename, dpi=200)
     plt.show()
 
 if __name__ == "__main__":
-    wheel_offsets, wheel_loads = train_loads("LC1")
-    SFD, BMD, SFDi, BMDi = envelopes(x, wheel_offsets, wheel_loads, L)
+    pass
