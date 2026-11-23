@@ -188,17 +188,16 @@ def applied_stress(SFD, BMD, ybot, ytop, I, Qcent, Qglue, tw, bg):
 def capacities(bft, tft, tw, hw, sw, a, ytop):
     E = E_MAT
     mu = NU_MAT
-    S_tens = ...
-    S_comp = ...
-    T_max = ...
-    T_gmax = ...
-    S_buck1 = ...
-    S_buck2 = ...
-    S_buck3 = ...
-    T_buck = ...
+    S_tens = SIGMA_T
+    S_comp = SIGMA_C
+    T_max = TAU_M
+    T_gmax = TAU_GLUE
+    buck_const = np.pi ** 2 * E / (12 * (1 - mu ** 2))
+    S_buck1 = 4 * buck_const * (tft / sw) ** 2
+    S_buck2 = 0.425 * buck_const * (2 * tft / (bft - sw)) ** 2
+    S_buck3 = 6 * buck_const * (tw / (ytop - tft)) ** 2
+    T_buck = 5 * buck_const * ((tw / hw) ** 2 + (tw / a) ** 2)
     return S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck
-
-    # NOTE: Currently unfinished. 
 
 ############################## matlab sec. 6 ##############################
 # 6. FOS
