@@ -21,42 +21,6 @@ TAU_GLUE = 2.0
 SHEET_AREA = 813 * 1016
 SHEET_MASS_G = 750.0
 
-############################## reactions ##############################
-# we completed this before reading the matlab skeleton code oops
-
-# TRAIN_LEN = 960 # in mm
-
-# bridge_len = 1250 # temporary value
-
-# # returns the left and right reaction forces (tuple) (Newtons) for the rightmost wheel of the train at a given position x (mm) from the left end of the bridge
-# # direction = 1 or -1, this is the direction in which the trains are moving. that is, where the locomotive is
-# def old_reactions(x, w, case, direction): 
-#     left, right = 0, 0
-
-#     wheel_x = [x, x - 176, x - 340, x - 516, x - 680, x - 856]
-
-#     if direction == -1:
-#         wheel_x.reverse()
-
-#     if case >= 2:
-#         weight = [1.39 * 1.1 * w / 2] * 2 + [w / 2] * 2 + [1.1 * w/ 2] * 2
-#     elif case == 1:
-#         weight = [182 / 2] * 2 + [135 / 2] * 4 
-#     else:
-#         weight = [200 / 3] * 6
-    
-#     for i in range(6):
-#         if 0 < wheel_x[i] <= SPAN:
-#             right += weight[i] * wheel_x[i]
-#     right /= SPAN
-
-#     for i in range(6):
-#         if 0 <= wheel_x[i] <= SPAN:
-#             left += weight[i]
-#     left -= right
-
-#     return left, right
-
 ############################## matlab sec. 1 ##############################
 # 1. SFD, BMD under train loading
 
@@ -91,9 +55,9 @@ def reactions(positions, loads, L):
 
 # returns array of shear force V at each x
 def sfd(x, positions, loads, L):
-    leftr, rightr = reactions(positions, loads, L)
+    left_reaction, right_reaction = reactions(positions, loads, L)
 
-    V = np.full(len(x), leftr)
+    V = np.full(len(x), left_reaction)
     for i in range(len(positions)):
         if 0 <= positions[i] <= L:
             V[x >= positions[i]] -= loads[i]
@@ -101,9 +65,9 @@ def sfd(x, positions, loads, L):
 
 # returns array of bending moment M vs x
 def bmd(x, positions, loads, L):
-    leftr, rightr = reactions(positions, loads, L)
+    left_reaction, right_reaction = reactions(positions, loads, L)
 
-    M = leftr * x
+    M = left_reaction * x
     for i in range(len(positions)):
         if 0 <= positions[i] <= L:
             M = M - loads[i] * np.maximum(x - positions[i], 0)
@@ -135,59 +99,93 @@ def envelopes(x, wheel_offsets, wheel_loads, L, step=1):
 
     return SFD, BMD, np.array(SFDi), np.array(BMDi)
 
-# bro that took forever
-# note: everything below this point is just the pasted matlab pseudocode but for python
-
 ############################## matlab sec. 2 ##############################
 # 2. Define Bridge Parameters
 
 def bridge_parameters(x):
-    #       = xc,   bft, tft,
-    param = np.array([[0,   100, 1.27],
-                      [400, 100, 1.27],
-                      [800, 100, 1.27],
-                      [L,   100, 1.27]])
-    # x_c     Location, x, of cross-section change
-    # bft     Top Flange Width
-    # tft     Top Flange Thickness
+    #                = xc,   bft, tft,  bfb,tfb,  hw,    tw,   bg,tg,   sw,    a
+    param = np.array([[0,    100, 1.27, 80, 1.27, 73.73, 1.27, 5, 1.27, 78.73, 400],
+                      [400,  100, 1.27, 80, 1.27, 73.73, 1.27, 5, 1.27, 78.73, 400],
+                      [800,  100, 1.27, 80, 1.27, 73.73, 1.27, 5, 1.27, 78.73, 400],
+                      [1200, 100, 1.27, 80, 1.27, 73.73, 1.27, 5, 1.27, 78.73, 400]])
+    # x_c   Location, x, of cross-section change
+    # bft   Top Flange Width
+    # tft   Top Flange Thickness
+    # bfb   Bottom Flange Width
+    # tfb   Bottom Flange Thickness
+    # hw    Web Height (between the bottom and top flanges)
+    # tw    Web Thickness
+    # bg    Glue Tab Width
+    # tg    Glue Tab Thickness
+    # sw    Spacing between Webs (centre to centre)
+    # a     Diaphragm Spacing
 
     # Extracting user input assuming linear relationship
     bft = np.interp(x, param[:, 0], param[:, 1])
     tft = np.interp(x, param[:, 0], param[:, 2])
-    return bft, tft
+    bfb = np.interp(x, param[:, 0], param[:, 3])
+    tfb = np.interp(x, param[:, 0], param[:, 4])
+    hw = np.interp(x, param[:, 0], param[:, 5])
+    tw = np.interp(x, param[:, 0], param[:, 6])
+    bg = np.interp(x, param[:, 0], param[:, 7])
+    tg = np.interp(x, param[:, 0], param[:, 8])
+    sw = np.interp(x, param[:, 0], param[:, 9])
+    a = np.interp(x, param[:, 0], param[:, 10])
+    return bft, tft, bfb, tfb, hw, tw, bg, tg, sw, a
+
+    # NOTE: Currently unfinished. Default values are from Design 0
+    # right now this is simply initializing our parameters with defaults
 
 ############################## matlab sec. 3 ##############################
 # 3. Calculate Sectional Properties
 
-def sectional_properties(bft, tft):
+def sectional_properties(bft, tft, bfb, tfb, hw, tw, bg, tg):
+    ybarbot = tfb / 2
+    ybarmid = tfb + hw / 2 # remember there are TWO mid rectangles
+    ybartop = tfb + hw + tft / 2
+    ybartab = tfb + hw - tg / 2 # glue tab
+
+    Abot = bfb * tfb
+    Amid = tw * hw # again two mid rectangles
+    Atop = bft * tft
+    Atab = bg * tg # glue tab
+
     # ybar. location of centroidal axis from the bottom
-    ybar = ...
-    ybot = ...
-    ytop = ...
+    ybar = (Abot * ybarbot + 2 * Amid * ybarmid + Atop * ybartop + 2 * Atab * ybartab) / (Abot + 2 * Amid + Atop + 2 * Atab)
+
+    ybot = ybar
+    ytop = tfb + hw + tft - ybar
+
+    Ibot = bfb * tfb ** 3 / 12
+    Imid = tw * hw ** 3 / 12
+    Itop = bft * tft ** 3 / 12
+    Itab = bg * tg ** 3 / 12
 
     # I
-    I = ...
+    I = Ibot + Abot * (ybar - ybarbot) ** 2 + 2 * (Imid + Amid * (ybar - ybarmid) ** 2) + Itop + Atop * (ybar - ybartop) ** 2 + 2 * (Itab + Atab * (ybar - ybartab) ** 2)
+
     # Q at centroidal axes
-    Qcent = ...
+    Qcent = Atop * (ybartop - ybar) + 2 * Atab * (ybartab - ybar) + tw * (tfb + hw - ybar) ** 2
 
     # Q at glue location
-    Qglue = ...
+    Qglue = Atop * (ybartop - ybar)
+
     return ybar, ybot, ytop, I, Qcent, Qglue
 
 ############################## matlab sec. 4 ##############################
 # 4. Calculate Applied Stress
 
-def applied_stress(SFD, BMD, ybar, ybot, ytop, I, Qcent, Qglue):
-    S_top = ...
-    S_bot = ...
-    T_cent = ...
-    T_glue = ...
+def applied_stress(SFD, BMD, ybot, ytop, I, Qcent, Qglue, tw, bg):
+    S_top = BMD * ytop / I
+    S_bot = BMD * ybot / I
+    T_cent = SFD * Qcent / (I * 2 * tw)
+    T_glue = SFD * Qglue / (I * 2 * (bg + tw))
     return S_top, S_bot, T_cent, T_glue
 
 ############################## matlab sec. 5 ##############################
 # 5. Material and Thin Plate Buckling Capacities
 
-def capacities(bft, tft, ybar, ytop):
+def capacities(bft, tft, tw, hw, sw, a, ytop):
     E = E_MAT
     mu = NU_MAT
     S_tens = ...
@@ -200,31 +198,52 @@ def capacities(bft, tft, ybar, ytop):
     T_buck = ...
     return S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck
 
+    # NOTE: Currently unfinished. 
+
 ############################## matlab sec. 6 ##############################
 # 6. FOS
 
-def factors_of_safety(S_top, S_bot, T_cent, T_glue,
-                      S_tens, S_comp, T_max, T_gmax,
-                      S_buck1, S_buck2, S_buck3, T_buck):
-    FOS_tens = ...
-    FOS_comp = ...
-    FOS_shear = ...
-    FOS_glue = ...
-    FOS_buck1 = ...
-    FOS_buck2 = ...
-    FOS_buck3 = ...
-    FOS_buckV = ...
-    return (FOS_tens, FOS_comp, FOS_shear, FOS_glue,
-            FOS_buck1, FOS_buck2, FOS_buck3, FOS_buckV)
+def factors_of_safety(S_top, S_bot, T_cent, T_glue, S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck):
+    FOS_tens = S_tens / S_bot
+    FOS_comp = S_comp / S_top
+    FOS_shear = T_max / T_cent
+    FOS_glue = T_gmax / T_glue
+    FOS_buck1 = S_buck1 / S_top
+    FOS_buck2 = S_buck2 / S_top
+    FOS_buck3 = S_buck3 / S_top
+    FOS_buckV = T_buck / T_cent
+    return FOS_tens, FOS_comp, FOS_shear, FOS_glue, FOS_buck1, FOS_buck2, FOS_buck3, FOS_buckV
+
+    # note: S_top is the worst compressive stress at the top face, S_bot is the worst tensile stress at the bottom face
 
 ############################## matlab sec. 7 ##############################
 # 7. Min FOS and the failure load Pfail
 
 def failure_load(FOS_tens, FOS_comp, FOS_shear, FOS_glue,
                  FOS_buck1, FOS_buck2, FOS_buck3, FOS_buckV):
-    minFOS = ...
-    Pf = ...
-    return minFOS, Pf
+    FOS = {"tension": FOS_tens,
+           "compression": FOS_comp,
+           "shear": FOS_shear,
+           "glue": FOS_glue,
+           "buckling in the middle flange": FOS_buck1,
+           "buckling in the side flanges": FOS_buck2,
+           "buckling in the webs": FOS_buck3,
+           "shear buckling": FOS_buckV}
+    minFOS = float('inf')
+    weakest = None
+    for type in FOS:
+        m = np.min(FOS[type])
+        if m < minFOS:
+            minFOS = m
+            weakest = type
+    Pf = minFOS * P
+    x_fail = x[np.argmin(FOS[weakest])]
+    
+    return minFOS, Pf, weakest, x_fail
+
+    # note: these are not from the matlab skeleton,
+    # weakest is a string containing the TYPE of the failure load (ie. "FOS_comp")
+    # x is position at which this failure load occurs
 
 ############################## matlab sec. 8 ##############################
 # 8. Vfail and Mfail
