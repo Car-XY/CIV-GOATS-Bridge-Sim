@@ -1,0 +1,85 @@
+% fix spacing
+\RedeclareSectionCommand[beforeskip=-2.8ex plus -0.8ex minus -0.2ex, afterskip=1.2ex plus 0.2ex]{section}
+\RedeclareSectionCommand[beforeskip=-2.6ex plus -0.8ex minus -0.2ex, afterskip=1.0ex plus 0.2ex]{subsection}
+\RedeclareSectionCommand[beforeskip=-2.6ex plus -0.8ex minus -0.2ex, afterskip=1.0ex plus 0.2ex]{subsubsection}
+\tcbset{btbox/.append style={before skip=0.5\baselineskip, after skip=0.5\baselineskip},
+        blackbox/.style={btsidebar, btbg=ThmBlue!5, borderline west={2.6pt}{0pt}{ThmBlue}}}
+
+% recoloring stuff
+\definecolor{ThmBlue}{RGB}{155,27,48}
+\definecolor{HeadSlate}{RGB}{50,57,66}
+\definecolor{NumAccent}{RGB}{0,118,124}
+\definecolor{DefDark}{RGB}{0,84,90}
+\definecolor{LinkRose}{RGB}{0,100,108}
+\colorlet{DefGreen}{NumAccent}\colorlet{ExOrange}{NumAccent}\colorlet{ParaOrange}{ThmBlue}
+
+\renewcommand*{\subsectionformat}{{\color{NumAccent}\thesubsection}\enskip}
+\renewcommand*{\subsubsectionformat}{{\color{NumAccent}\thesubsubsection}\enskip}
+
+% unbold subtitle
+\setkomafont{subtitle}{\normalfont\large\color{HeadSlate!85}}
+
+% units
+\newcommand{\unit}[1]{\,\text{\small #1}}
+
+% this genuinely took forever to get right
+\newcommand{\answerbox}[1]{\tcbox[on line, colback=ThmBlue!9, colframe=ThmBlue!65,  boxrule=0.6pt, arc=2pt, left=4pt, right=4pt, top=2pt, bottom=2pt]{$\displaystyle #1$}}
+% now imagine trying to use tikz
+% oh wait thats next deliverable
+% kill me now
+
+\newcommand{\journalname}{Journal of N$\Psi$ Bridge Design}
+\subject{\journalname}
+\setkomafont{subject}{\normalfont\large\scshape\color{HeadSlate!85}}
+\title{Design Report}
+\renewcommand{\thetitle}{\journalname: Design Report}
+
+\subtitle{Team 809 \quad$\star$\quad TA: Mohi}
+\author{Daniel Kessler, Cary Li, Zekai Liu, Brendan Tang, Leon Zhang}
+\date{\today}
+
+\addtokomafont{pageheadfoot}{\color{black!60}}
+\addtokomafont{headsepline}{\color{ThmBlue!40}}
+
+% get last page
+\usepackage{lastpage}
+
+\cfoot*{}\ohead{\textit{Journal of N$\Psi$ Bridge Design: Design Report}\quad\pagemark\,/\,\pageref*{LastPage}}
+
+% GRADIENTS
+% THANKS SO MUCH LATEX STACK EXCHANGE I BARELY UNDERSTAND THIS LOL
+\usetikzlibrary{fadings}
+\definecolor{GradGreen}{RGB}{196,150,12} % green except its not
+\pgfdeclarehorizontalshading{btgrad}{100bp}{color(0bp)=(GradGreen); color(38bp)=(GradGreen); color(62bp)=(NumAccent); color(100bp)=(NumAccent)}
+\newcounter{gradtext}
+\newcommand{\gradtext}[1]{%
+  \stepcounter{gradtext}%
+  \begin{tikzfadingfrompicture}[name=gradfade\thegradtext]
+    \node[inner sep=0pt, text=transparent!0] {#1};
+  \end{tikzfadingfrompicture}%
+  \tikz[baseline=(b.base)]{%
+    \node[inner sep=0pt, text opacity=0] (b) {#1};
+    \shade[path fading=gradfade\thegradtext, fit fading=false,
+           fading transform={shift={(b.center)}}, shading=btgrad, shading angle=-45]
+      (b.south west) rectangle (b.north east);}%
+}
+\renewcommand*{\sectionformat}{\gradtext{\numbigger[1.5]{\thesection}}\enskip}
+
+% thanks again tex exchange 
+% colors are from one light theme for vscode
+\usepackage{minted}
+\colorlet{CodeBg}{HeadSlate}
+\setminted{linenos, xleftmargin=1.4em, numbersep=8pt, fontsize=\small, breaklines, autogobble, style=one-dark}
+\renewcommand{\theFancyVerbLine}{\sffamily\scriptsize\color[RGB]{157,157,159}\arabic{FancyVerbLine}}
+\AddToHook{env/minted/before}{\begin{tcolorbox}[btbox, colback=CodeBg!5, colframe=CodeBg!25, boxrule=0.5pt, arc=2pt, left=4pt, top=2pt, bottom=2pt]}
+\AddToHook{env/minted/after}{\end{tcolorbox}}
+\NewCommandCopy{\btOrigTextcolor}{\textcolor}
+\newcommand{\btOneLight}[2]{\expandafter\def\csname btOL:#1\endcsname{#2}}
+\btOneLight{0.67,0.70,0.75}{56,58,66}\btOneLight{0.78,0.47,0.87}{166,38,164}
+\btOneLight{0.90,0.75,0.48}{193,132,1}\btOneLight{0.88,0.42,0.46}{228,86,73}
+\btOneLight{0.38,0.69,0.94}{64,120,242}\btOneLight{0.34,0.71,0.76}{1,132,188}
+\btOneLight{0.60,0.76,0.47}{80,161,79}\btOneLight{0.82,0.60,0.40}{152,104,1}
+\btOneLight{0.50,0.52,0.56}{160,161,167}
+\AddToHook{env/minted/begin}{\RenewDocumentCommand{\textcolor}{o m m}{%
+  \ifcsname btOL:#2\endcsname\edef\btOLc{\csname btOL:#2\endcsname}\btOrigTextcolor[RGB]{\btOLc}{#3}%
+  \else\IfValueTF{#1}{\btOrigTextcolor[#1]{#2}{#3}}{\btOrigTextcolor{#2}{#3}}\fi}}
