@@ -91,9 +91,9 @@ def reactions(positions, loads, L):
 
 # returns array of shear force V at each x
 def sfd(x, positions, loads, L):
-    leftr, rightr = reactions(positions, loads, L)
+    left_reaction, right_reaction = reactions(positions, loads, L)
 
-    V = np.full(len(x), leftr)
+    V = np.full(len(x), left_reaction)
     for i in range(len(positions)):
         if 0 <= positions[i] <= L:
             V[x >= positions[i]] -= loads[i]
@@ -101,9 +101,9 @@ def sfd(x, positions, loads, L):
 
 # returns array of bending moment M vs x
 def bmd(x, positions, loads, L):
-    leftr, rightr = reactions(positions, loads, L)
+    left_reaction, right_reaction = reactions(positions, loads, L)
 
-    M = leftr * x
+    M = left_reaction * x
     for i in range(len(positions)):
         if 0 <= positions[i] <= L:
             M = M - loads[i] * np.maximum(x - positions[i], 0)
@@ -135,21 +135,26 @@ def envelopes(x, wheel_offsets, wheel_loads, L, step=1):
 
     return SFD, BMD, np.array(SFDi), np.array(BMDi)
 
-# bro that took forever
-# note: everything below this point is just the pasted matlab pseudocode but for python
-
 ############################## matlab sec. 2 ##############################
 # 2. Define Bridge Parameters
 
 def bridge_parameters(x):
-    #       = xc,   bft, tft,
+    #                = xc,  bft, tft, bfb, tfb
     param = np.array([[0,   100, 1.27],
                       [400, 100, 1.27],
                       [800, 100, 1.27],
                       [L,   100, 1.27]])
-    # x_c     Location, x, of cross-section change
-    # bft     Top Flange Width
-    # tft     Top Flange Thickness
+    # x_c   Location, x, of cross-section change
+    # bft   Top Flange Width
+    # tft   Top Flange Thickness
+    # bfb   Bottom Flange Width
+    # tfb   Bottom Flange Thickness
+    # hw    Web Height
+    # tw    Web Thickness
+    # bg    Glue Tab Width
+    # tg    Glue Tab Thickness
+    # sw    Spacing between Webs (centre to centre)
+    # a     Diaphragm Spacing
 
     # Extracting user input assuming linear relationship
     bft = np.interp(x, param[:, 0], param[:, 1])
