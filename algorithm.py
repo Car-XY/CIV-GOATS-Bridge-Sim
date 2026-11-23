@@ -176,28 +176,46 @@ def bridge_parameters(x):
 # 3. Calculate Sectional Properties
 
 def sectional_properties(bft, tft, bfb, tfb, hw, tw, bg, tg):
+    ybarbot = tfb / 2
+    ybarmid = tfb + hw / 2 # remember there are TWO mid rectangles
+    ybartop = tfb + hw + tft / 2
+    ybartab = tfb + hw - tg / 2 # glue tab
+
+    Abot = bfb * tfb
+    Amid = tw * hw # again two mid rectangles
+    Atop = bft * tft
+    Atab = bg * tg # glue tab
+
     # ybar. location of centroidal axis from the bottom
-    ybar = ...
-    ybot = ...
-    ytop = ...
+    ybar = (Abot * ybarbot + 2 * Amid * ybarmid + Atop * ybartop + 2 * Atab * ybartab) / (Abot + 2 * Amid + Atop + 2 * Atab)
+
+    ybot = ybar
+    ytop = tfb + hw + tft - ybar
+
+    Ibot = bfb * tfb ** 3 / 12
+    Imid = tw * hw ** 3 / 12
+    Itop = bft * tft ** 3 / 12
+    Itab = bg * tg ** 3 / 12
 
     # I
-    I = ...
+    I = Ibot + Abot * (ybar - ybarbot) ** 2 + 2 * (Imid + Amid * (ybar - ybarmid) ** 2) + Itop + Atop * (ybar - ybartop) ** 2 + 2 * (Itab + Atab * (ybar - ybartab) ** 2)
+
     # Q at centroidal axes
-    Qcent = ...
+    Qcent = Atop * (ybartop - ybar) + 2 * Atab * (ybartab - ybar) + tw * (tfb + hw - ybar) ** 2
 
     # Q at glue location
-    Qglue = ...
+    Qglue = Atop * (ybartop - ybar)
+
     return ybar, ybot, ytop, I, Qcent, Qglue
 
 ############################## matlab sec. 4 ##############################
 # 4. Calculate Applied Stress
 
-def applied_stress(SFD, BMD, ybar, ybot, ytop, I, Qcent, Qglue):
-    S_top = ...
-    S_bot = ...
-    T_cent = ...
-    T_glue = ...
+def applied_stress(SFD, BMD, ybar, ybot, ytop, I, Qcent, Qglue, tw, bg):
+    S_top = BMD * ytop / I
+    S_bot = BMD * ybot / I
+    T_cent = SFD * Qcent / (I * 2 * tw)
+    T_glue = SFD * Qglue / (I * 2 * (bg + tw))
     return S_top, S_bot, T_cent, T_glue
 
 ############################## matlab sec. 5 ##############################
