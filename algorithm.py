@@ -140,10 +140,10 @@ def envelopes(x, wheel_offsets, wheel_loads, L, step=1):
 
 def bridge_parameters(x):
     #                = xc,   bft, tft,  bfb,tfb,  hw,    tw,   bg,tg,   sw,    a
-    param = np.array([[0,    100, 1.27, 80, 1.27, 78.73, 1.27, 5, 1.27, 77.46, 400],
-                      [400,  100, 1.27, 80, 1.27, 78.73, 1.27, 5, 1.27, 77.46, 400],
-                      [800,  100, 1.27, 80, 1.27, 78.73, 1.27, 5, 1.27, 77.46, 400],
-                      [1200, 100, 1.27, 80, 1.27, 78.73, 1.27, 5, 1.27, 77.46, 400]])
+    param = np.array([[0,    100, 1.27, 80, 1.27, 73.73, 1.27, 5, 1.27, 78.73, 400],
+                      [400,  100, 1.27, 80, 1.27, 73.73, 1.27, 5, 1.27, 78.73, 400],
+                      [800,  100, 1.27, 80, 1.27, 73.73, 1.27, 5, 1.27, 78.73, 400],
+                      [1200, 100, 1.27, 80, 1.27, 73.73, 1.27, 5, 1.27, 78.73, 400]])
     # x_c   Location, x, of cross-section change
     # bft   Top Flange Width
     # tft   Top Flange Thickness
@@ -211,7 +211,7 @@ def sectional_properties(bft, tft, bfb, tfb, hw, tw, bg, tg):
 ############################## matlab sec. 4 ##############################
 # 4. Calculate Applied Stress
 
-def applied_stress(SFD, BMD, ybar, ybot, ytop, I, Qcent, Qglue, tw, bg):
+def applied_stress(SFD, BMD, ybot, ytop, I, Qcent, Qglue, tw, bg):
     S_top = BMD * ytop / I
     S_bot = BMD * ybot / I
     T_cent = SFD * Qcent / (I * 2 * tw)
@@ -221,7 +221,7 @@ def applied_stress(SFD, BMD, ybar, ybot, ytop, I, Qcent, Qglue, tw, bg):
 ############################## matlab sec. 5 ##############################
 # 5. Material and Thin Plate Buckling Capacities
 
-def capacities(bft, tft, ybar, ytop):
+def capacities(bft, tft, tw, hw, sw, a, ytop):
     E = E_MAT
     mu = NU_MAT
     S_tens = ...
@@ -234,22 +234,23 @@ def capacities(bft, tft, ybar, ytop):
     T_buck = ...
     return S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck
 
+    # NOTE: Currently unfinished. 
+
 ############################## matlab sec. 6 ##############################
 # 6. FOS
 
-def factors_of_safety(S_top, S_bot, T_cent, T_glue,
-                      S_tens, S_comp, T_max, T_gmax,
-                      S_buck1, S_buck2, S_buck3, T_buck):
-    FOS_tens = ...
-    FOS_comp = ...
-    FOS_shear = ...
-    FOS_glue = ...
-    FOS_buck1 = ...
-    FOS_buck2 = ...
-    FOS_buck3 = ...
-    FOS_buckV = ...
-    return (FOS_tens, FOS_comp, FOS_shear, FOS_glue,
-            FOS_buck1, FOS_buck2, FOS_buck3, FOS_buckV)
+def factors_of_safety(S_top, S_bot, T_cent, T_glue, S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck):
+    FOS_tens = S_tens / S_bot
+    FOS_comp = S_comp / S_top
+    FOS_shear = T_max / T_cent
+    FOS_glue = T_gmax / T_glue
+    FOS_buck1 = S_buck1 / S_top
+    FOS_buck2 = S_buck2 / S_top
+    FOS_buck3 = S_buck3 / S_top
+    FOS_buckV = T_buck / T_cent
+    return FOS_tens, FOS_comp, FOS_shear, FOS_glue, FOS_buck1, FOS_buck2, FOS_buck3, FOS_buckV
+
+    # note: S_top is the worst compressive stress at the top face, S_bot is the worst tensile stress at the bottom face
 
 ############################## matlab sec. 7 ##############################
 # 7. Min FOS and the failure load Pfail
