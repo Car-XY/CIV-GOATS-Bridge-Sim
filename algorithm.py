@@ -247,18 +247,16 @@ def failure_load(FOS_tens, FOS_comp, FOS_shear, FOS_glue,
 ############################## matlab sec. 8 ##############################
 # 8. Vfail and Mfail
 
-def failure_envelopes(SFD, BMD, FOS_tens, FOS_comp, FOS_shear, FOS_glue,
-                      FOS_buck1, FOS_buck2, FOS_buck3, FOS_buckV):
-    Mf_tens = ...
-    Mf_comp = ...
-    Vf_shear = ...
-    Vf_glue = ...
-    Mf_buck1 = ...
-    Mf_buck2 = ...
-    Mf_buck3 = ...
-    Vf_buckV = ...
-    return (Mf_tens, Mf_comp, Vf_shear, Vf_glue,
-            Mf_buck1, Mf_buck2, Mf_buck3, Vf_buckV)
+def failure_envelopes(S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck, I, ybot, ytop, Qcent, Qglue, tw, bg):
+    Mf_tens = S_tens * I / ybot
+    Mf_comp = S_comp * I / ytop
+    Vf_shear = T_max * I * 2 * tw / Qcent
+    Vf_glue = T_gmax * I * 2 * (bg + tw) / Qglue
+    Mf_buck1 = S_buck1 * I / ytop
+    Mf_buck2 = S_buck2 * I / ytop
+    Mf_buck3 = S_buck3 * I / ytop
+    Vf_buckV = T_buck * I * 2 * tw / Qcent
+    return Mf_tens, Mf_comp, Vf_shear, Vf_glue, Mf_buck1, Mf_buck2, Mf_buck3, Vf_buckV
 
 ############################## matlab sec. 9 ##############################
 # 9. Output plots of Vfail and Mfail
