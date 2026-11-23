@@ -139,17 +139,17 @@ def envelopes(x, wheel_offsets, wheel_loads, L, step=1):
 # 2. Define Bridge Parameters
 
 def bridge_parameters(x):
-    #                = xc,  bft, tft, bfb, tfb
-    param = np.array([[0,   100, 1.27],
-                      [400, 100, 1.27],
-                      [800, 100, 1.27],
-                      [L,   100, 1.27]])
+    #                = xc,   bft, tft,  bfb,tfb,  hw,    tw,   bg,tg,   sw,    a
+    param = np.array([[0,    100, 1.27, 80, 1.27, 78.73, 1.27, 5, 1.27, 77.46, 400],
+                      [400,  100, 1.27, 80, 1.27, 78.73, 1.27, 5, 1.27, 77.46, 400],
+                      [800,  100, 1.27, 80, 1.27, 78.73, 1.27, 5, 1.27, 77.46, 400],
+                      [1200, 100, 1.27, 80, 1.27, 78.73, 1.27, 5, 1.27, 77.46, 400]])
     # x_c   Location, x, of cross-section change
     # bft   Top Flange Width
     # tft   Top Flange Thickness
     # bfb   Bottom Flange Width
     # tfb   Bottom Flange Thickness
-    # hw    Web Height
+    # hw    Web Height (between the bottom and top flanges)
     # tw    Web Thickness
     # bg    Glue Tab Width
     # tg    Glue Tab Thickness
@@ -159,12 +159,23 @@ def bridge_parameters(x):
     # Extracting user input assuming linear relationship
     bft = np.interp(x, param[:, 0], param[:, 1])
     tft = np.interp(x, param[:, 0], param[:, 2])
-    return bft, tft
+    bfb = np.interp(x, param[:, 0], param[:, 3])
+    tfb = np.interp(x, param[:, 0], param[:, 4])
+    hw = np.interp(x, param[:, 0], param[:, 5])
+    tw = np.interp(x, param[:, 0], param[:, 6])
+    bg = np.interp(x, param[:, 0], param[:, 7])
+    tg = np.interp(x, param[:, 0], param[:, 8])
+    sw = np.interp(x, param[:, 0], param[:, 9])
+    a = np.interp(x, param[:, 0], param[:, 10])
+    return bft, tft, bfb, tfb, hw, tw, bg, tg, sw, a
+
+    # NOTE: Currently unfinished. Default values are from Design 0
+    # right now this is simply initializing our parameters with defaults
 
 ############################## matlab sec. 3 ##############################
 # 3. Calculate Sectional Properties
 
-def sectional_properties(bft, tft):
+def sectional_properties(bft, tft, bfb, tfb, hw, tw, bg, tg):
     # ybar. location of centroidal axis from the bottom
     ybar = ...
     ybot = ...
