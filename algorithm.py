@@ -1,3 +1,4 @@
+import sys # command line arguments
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -311,5 +312,4 @@ def output_plots(x, SFDi, BMDi, Mf_tens, Mf_comp, Vf_shear, Vf_glue, Mf_buck1, M
     plt.show()
 
 if __name__ == "__main__":
-    wheel_offsets, wheel_loads = train_loads("LC1")
-    SFD, BMD, SFDi, BMDi = envelopes(x, wheel_offsets, wheel_loads, L)
+    pass
