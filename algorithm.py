@@ -135,6 +135,128 @@ def envelopes(x, wheel_offsets, wheel_loads, L, step=1):
 
     return SFD, BMD, np.array(SFDi), np.array(BMDi)
 
+# bro that took forever
+# note: everything below this point is just the pasted matlab pseudocode but for python
+
+############################## matlab sec. 2 ##############################
+# 2. Define Bridge Parameters
+
+def bridge_parameters(x):
+    #       = xc,   bft, tft,
+    param = np.array([[0,   100, 1.27],
+                      [400, 100, 1.27],
+                      [800, 100, 1.27],
+                      [L,   100, 1.27]])
+    # x_c     Location, x, of cross-section change
+    # bft     Top Flange Width
+    # tft     Top Flange Thickness
+
+    # Extracting user input assuming linear relationship
+    bft = np.interp(x, param[:, 0], param[:, 1])
+    tft = np.interp(x, param[:, 0], param[:, 2])
+    return bft, tft
+
+############################## matlab sec. 3 ##############################
+# 3. Calculate Sectional Properties
+
+def sectional_properties(bft, tft):
+    # ybar. location of centroidal axis from the bottom
+    ybar = ...
+    ybot = ...
+    ytop = ...
+
+    # I
+    I = ...
+    # Q at centroidal axes
+    Qcent = ...
+
+    # Q at glue location
+    Qglue = ...
+    return ybar, ybot, ytop, I, Qcent, Qglue
+
+############################## matlab sec. 4 ##############################
+# 4. Calculate Applied Stress
+
+def applied_stress(SFD, BMD, ybar, ybot, ytop, I, Qcent, Qglue):
+    S_top = ...
+    S_bot = ...
+    T_cent = ...
+    T_glue = ...
+    return S_top, S_bot, T_cent, T_glue
+
+############################## matlab sec. 5 ##############################
+# 5. Material and Thin Plate Buckling Capacities
+
+def capacities(bft, tft, ybar, ytop):
+    E = E_MAT
+    mu = NU_MAT
+    S_tens = ...
+    S_comp = ...
+    T_max = ...
+    T_gmax = ...
+    S_buck1 = ...
+    S_buck2 = ...
+    S_buck3 = ...
+    T_buck = ...
+    return S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck
+
+############################## matlab sec. 6 ##############################
+# 6. FOS
+
+def factors_of_safety(S_top, S_bot, T_cent, T_glue,
+                      S_tens, S_comp, T_max, T_gmax,
+                      S_buck1, S_buck2, S_buck3, T_buck):
+    FOS_tens = ...
+    FOS_comp = ...
+    FOS_shear = ...
+    FOS_glue = ...
+    FOS_buck1 = ...
+    FOS_buck2 = ...
+    FOS_buck3 = ...
+    FOS_buckV = ...
+    return (FOS_tens, FOS_comp, FOS_shear, FOS_glue,
+            FOS_buck1, FOS_buck2, FOS_buck3, FOS_buckV)
+
+############################## matlab sec. 7 ##############################
+# 7. Min FOS and the failure load Pfail
+
+def failure_load(FOS_tens, FOS_comp, FOS_shear, FOS_glue,
+                 FOS_buck1, FOS_buck2, FOS_buck3, FOS_buckV):
+    minFOS = ...
+    Pf = ...
+    return minFOS, Pf
+
+############################## matlab sec. 8 ##############################
+# 8. Vfail and Mfail
+
+def failure_envelopes(SFD, BMD, FOS_tens, FOS_comp, FOS_shear, FOS_glue,
+                      FOS_buck1, FOS_buck2, FOS_buck3, FOS_buckV):
+    Mf_tens = ...
+    Mf_comp = ...
+    Vf_shear = ...
+    Vf_glue = ...
+    Mf_buck1 = ...
+    Mf_buck2 = ...
+    Mf_buck3 = ...
+    Vf_buckV = ...
+    return (Mf_tens, Mf_comp, Vf_shear, Vf_glue,
+            Mf_buck1, Mf_buck2, Mf_buck3, Vf_buckV)
+
+############################## matlab sec. 9 ##############################
+# 9. Output plots of Vfail and Mfail
+
+def output_plots(x, SFD, SFDi, Vf_shear):
+    plt.subplot(2, 3, 1)
+    plt.grid(True); plt.minorticks_on(); plt.grid(True, which="minor")
+    plt.plot(x, Vf_shear, "r")
+    plt.plot(x, -Vf_shear * SFD, "r")
+    plt.plot(x, SFDi.T, "k")
+    plt.plot([0, L], [0, 0], "k", linewidth=2)
+    plt.legend(["Matboard Shear Failure"])
+    plt.xlabel("Distance along bridge (mm)")
+    plt.ylabel("Shear Force (N)")
+    plt.show()
+
 if __name__ == "__main__":
     wheel_offsets, wheel_loads = train_loads("LC1")
     SFD, BMD, SFDi, BMDi = envelopes(x, wheel_offsets, wheel_loads, L)
