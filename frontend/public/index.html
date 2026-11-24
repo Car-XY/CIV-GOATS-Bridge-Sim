@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<!--
+  index.html - the page layout. no logic in here, app.js wires everything up by id.
+  the 3d view fills the whole window, every panel floats on top of it.
+  note: view3d.js has to load before app.js (app.js makes the viewer straight away)
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CIV GOATS · Bridge Simulator</title>
+<link rel="icon" href="data:,"> <!-- empty favicon, stops a pointless 404 every load -->
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- the 3d view, drawn by view3d.js -->
+<canvas id="viewport"></canvas>
+
+<!-- view buttons + x-ray toggle, top middle -->
+<div id="viewbar">
+  <div class="seg small" id="viewSeg">
+    <button data-view="iso" class="on">3D</button><button data-view="side">Side</button><button data-view="end">End</button><button data-view="top">Top</button>
+  </div>
+  <label class="check" title="Make the side of the beam facing you see-through so the diaphragms show"><input type="checkbox" id="xray"> X-ray front</label>
+  <span class="viewhint">Drag to orbit · right-drag to pan · scroll to zoom</span>
+</div>
+
+<!-- ############################## left: bridge editor ############################## -->
+<aside class="panel" id="editor">
+  <header class="panel-title"><span class="title-text">Bridge Editor</span><span class="spacer"></span>
+    <button class="icon-btn" id="runIcon" title="Run simulation (Ctrl+Enter)">▶</button>
+    <button class="icon-btn" id="resetBtn" title="Reset to Design 0">⟲</button>
+    <button class="icon-btn min-btn" title="Minimize">–</button></header>
+  <div class="panel-body">
+    <section class="group" data-open="1">
+      <!-- one row per cross-section. app.js fills in tbody -->
+      <h3><span class="caret">▼</span>Cross-sections <span class="hint">mm · deck stays flat, height hangs down</span></h3>
+      <div class="group-body">
+        <div class="table-wrap">
+          <table id="rowsTable">
+            <thead>
+              <tr>
+                <th rowspan="2"></th><th rowspan="2">Position</th><th rowspan="2">Total<br>height</th>
+                <th colspan="2">Width</th><th colspan="3">Layers</th><th rowspan="2">Glue tab<br>width</th><th rowspan="2"></th>
+              </tr>
+              <tr><th><span class="chip x">T</span></th><th><span class="chip y">B</span></th>
+                  <th><span class="chip x">T</span></th><th><span class="chip y">B</span></th><th><span class="chip z">W</span></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="inline"><button class="btn ghost" id="addRowBtn">+ Add row</button>
+          <button class="btn ghost" id="secEdBtn" title="Open the selected row in the 2D cross-section editor">✎ Edit section in 2D</button></div>
+        <p class="note">Drag <span class="grip-demo">⠿</span> to reorder middle rows (positions stay in order, the sections move). T = top flange, B = bottom (outer width of the U), W = webs. Each layer is 1.27 mm.</p>
+      </div>
+    </section>
+
+    <section class="group" data-open="1">
+      <h3><span class="caret">▼</span>Diaphragms &amp; glue</h3>
+      <div class="group-body">
+        <div class="field"><label>Positions</label><div class="chips-input" id="diaList"></div></div>
+        <div class="field"><label></label>
+          <div class="inline"><input id="diaInput" type="number" placeholder="add mm"><button class="btn ghost small" id="diaAddBtn">Add</button>
+          <span class="pill-sep"></span><input id="diaEvenN" type="number" min="1" value="3" title="number of panels"><button class="btn ghost small" id="diaEvenBtn">Even panels</button></div></div>
+        <div class="field"><label>Glue tab layers</label><div class="xyz"><span class="chip m">n</span><input id="glueLayers" type="number" min="1" step="1" value="1"></div></div>
+      </div>
+    </section>
+
+    <section class="group" data-open="1">
+      <h3><span class="caret">▼</span>Load case</h3>
+      <div class="group-body">
+        <div class="field"><label>Case</label>
+          <select id="loadCase">
+            <option value="LC1">Load Case 1 · 400 N, 6 equal axles</option>
+            <option value="LC2_base">Load Case 2 · base (182 + 135 + 135 N)</option>
+            <option value="LC2_pass">Load Case 2 · subsequent pass</option>
+          </select></div>
+        <div class="field" id="freightRow" hidden><label>Lighter freight car</label><div class="xyz"><span class="chip y">N</span><input id="freight" type="number" min="1" value="135"></div></div>
+        <div class="field"><label>Locomotive</label>
+          <div class="seg" id="locoSeg"><button data-v="1" class="on">Leading</button><button data-v="0">Trailing</button></div></div>
+        <div class="field"><label>Train step</label><div class="xyz"><span class="chip z">mm</span><input id="step" type="number" min="1" step="1" value="1"></div></div>
+      </div>
+    </section>
+
+    <section class="group" data-open="1">
+      <!-- sec 1.5 of the handout. warnings only -->
+      <h3><span class="caret">▼</span>Handout checks <span class="hint">§1.5 dimensions</span></h3>
+      <div class="group-body"><div id="checks"></div></div>
+    </section>
+
+    <section class="group" data-open="0">
+      <!-- what actually gets sent to algorithm.py, collapsed by default -->
+      <h3><span class="caret">▶</span>Simulator rows <span class="hint">11-column CSV sent to algorithm.py</span></h3>
+      <div class="group-body">
+        <div class="table-wrap"><table id="csvTable" class="mono"></table></div>
+        <button class="btn ghost small" id="csvBtn">Download CSV</button>
+      </div>
+    </section>
+
+    <div id="errors"></div>
+  </div>
+  <footer class="panel-foot"><button class="btn primary" id="runBtn">Run simulation</button>
+    <label class="check" title="Re-run the moving-train analysis automatically after every change"><input type="checkbox" id="liveToggle" checked> Live</label>
+    <span id="status"></span></footer>
+</aside>
+
+<!-- ############################## right: results (moving train) ############################## -->
+<aside class="panel" id="results">
+  <header class="panel-title"><span class="title-text">Simulation Results</span><span class="spacer"></span>
+    <button class="icon-btn fx-btn" id="calcIcon" title="Show the formulas and numbers">ƒx</button>
+    <button class="icon-btn min-btn" title="Minimize">–</button></header>
+  <div class="panel-body">
+    <section class="group" data-open="1">
+      <h3><span class="caret">▼</span>Failure <span class="hint">moving train, all positions</span></h3>
+      <div class="group-body">
+        <div class="big"><span id="pFail">—</span><small>N</small></div>
+        <div class="field"><label>Mode</label><div class="readout" id="mode">—</div></div>
+        <div class="field"><label>Location</label><div class="xyz"><span class="chip x">x</span><output id="xFail">—</output><span class="chip m">FOS</span><output id="minFos">—</output></div></div>
+        <div class="field"><label>Train weight</label><div class="xyz"><span class="chip z">P</span><output id="trainW">—</output></div></div>
+        <p class="verdict" id="verdict"></p>
+        <button class="btn ghost small calc-open" data-src="env" data-at="fail" data-sec="fos">ƒx Show calculation</button>
+      </div>
+    </section>
+
+    <section class="group" data-open="1">
+      <h3><span class="caret">▼</span>Section @ midspan</h3>
+      <div class="group-body">
+        <div class="field"><label>Centroid ȳ</label><div class="xyz"><span class="chip y">mm</span><output id="ybar">—</output></div></div>
+        <div class="field"><label>I</label><div class="xyz"><span class="chip z">mm⁴</span><output id="Ival">—</output></div></div>
+        <button class="btn ghost small calc-open" data-src="env" data-x="600" data-sec="centroid">ƒx Show calculation</button>
+      </div>
+    </section>
+
+    <section class="group" data-open="1">
+      <h3><span class="caret">▼</span>Failure load by mode <span class="hint">click a mode for its calculation</span></h3>
+      <div class="group-body"><div id="modes"></div></div>
+    </section>
+
+    <!-- the two charts, same idea as output_plots() in algorithm.py -->
+    <section class="group" data-open="1">
+      <h3><span class="caret">▼</span>Shear force vs capacity <span class="hint">hover for values · click to pin</span></h3>
+      <div class="group-body"><canvas class="chart" id="sfdChart"></canvas><div class="legend" id="sfdLegend"></div></div>
+    </section>
+
+    <section class="group" data-open="1">
+      <h3><span class="caret">▼</span>Bending moment vs capacity <span class="hint">hover for values · click to pin</span></h3>
+      <div class="group-body"><canvas class="chart" id="bmdChart"></canvas><div class="legend" id="bmdLegend"></div></div>
+    </section>
+  </div>
+</aside>
+
+<!-- ############################## floating: fx calculation window ############################## -->
+<!-- hidden until you press one of the fx buttons. runner.py does the maths, app.js lays it out -->
+<aside class="panel" id="calc" hidden>
+  <header class="panel-title" id="calcHead"><span class="title-text">ƒx Calculation details</span><span class="spacer"></span>
+    <span class="hint">drag to move · corner to resize</span>
+    <button class="icon-btn min-btn" title="Minimize">–</button>
+    <button class="icon-btn" id="calcClose" title="Close">×</button></header>
+  <div class="panel-body">
+    <div class="calc-controls">
+      <div class="seg small" id="calcSrc"><button data-v="env" class="on">Moving train (envelope)</button><button data-v="pos">Train at slider position</button></div>
+      <div class="xyz calc-x"><span class="chip x">x</span><input id="calcX" type="number" min="0" max="1200" step="1" value="600"></div>
+      <button class="btn ghost small" id="calcFailBtn" title="Jump to the governing failure location">Failure point</button>
+      <select id="calcJump" title="Jump to a step">
+        <option value="loads">1 · Train loads</option><option value="demand">2 · Shear &amp; moment</option>
+        <option value="geometry">3 · Cross-section</option><option value="centroid">4 · Centroid ȳ</option>
+        <option value="I">5 · I</option><option value="Q">6 · Q</option><option value="stress">7 · Stresses</option>
+        <option value="capacity">8 · Capacities</option><option value="fos">9 · FOS &amp; failure load</option>
+      </select>
+    </div>
+    <p class="calc-intro" id="calcIntro"></p>
+    <div id="calcBody"></div>
+  </div>
+</aside>
+
+<!-- ############################## floating: 2d cross-section editor ############################## -->
+<!-- hidden until you press "edit section in 2D" or a pencil on a row -->
+<aside class="panel" id="secEd" hidden>
+  <header class="panel-title" id="secEdHead"><span class="title-text">✎ Cross-section editor</span><span class="spacer"></span>
+    <span class="hint">drag the orange handles · Shift = 0.1 mm steps</span>
+    <button class="icon-btn min-btn" title="Minimize">–</button>
+    <button class="icon-btn" id="secEdClose" title="Close">×</button></header>
+  <div class="panel-body sec-body">
+    <div class="sec-canvas-wrap"><canvas id="secCanvas"></canvas></div>
+    <div class="sec-side">
+      <div class="field"><label>Row</label><select id="secRow"></select></div>
+      <div class="field"><label>Total height</label><div class="xyz"><span class="chip z">H</span><input id="secH" type="number" step="0.01" data-k="H"></div></div>
+      <div class="field"><label>Top flange width</label><div class="xyz"><span class="chip x">T</span><input id="secBft" type="number" step="0.5" data-k="bft"></div></div>
+      <div class="field"><label>Bottom width</label><div class="xyz"><span class="chip y">B</span><input id="secBfb" type="number" step="0.5" data-k="bfb"></div></div>
+      <div class="field"><label>Glue tab width</label><div class="xyz"><span class="chip m">g</span><input id="secBg" type="number" step="0.5" data-k="bg"></div></div>
+      <div class="layers">
+        <div class="stepper" data-k="nt"><span>Top layers</span><button data-d="-1">−</button><output></output><button data-d="1">+</button></div>
+        <div class="stepper" data-k="nb"><span>Bottom layers</span><button data-d="-1">−</button><output></output><button data-d="1">+</button></div>
+        <div class="stepper" data-k="nw"><span>Web layers</span><button data-d="-1">−</button><output></output><button data-d="1">+</button></div>
+        <div class="stepper" data-k="glue"><span>Glue tab layers <em>(all rows)</em></span><button data-d="-1">−</button><output></output><button data-d="1">+</button></div>
+      </div>
+      <h5>Section properties <span class="hint">from algorithm.py</span></h5>
+      <div id="secProps" class="sec-props"></div>
+      <div id="secErrs"></div>
+      <p class="note">Folded-down deck edges aren't in algorithm.py yet, so they're left out here. The code for them is written and commented out in <code>public/section-extras.js</code>.</p>
+    </div>
+  </div>
+</aside>
+
+<!-- ############################## bottom: train bar (parked train) ############################## -->
+<aside class="panel" id="trainbar">
+  <header class="panel-title"><span class="title-text">Train position</span><span class="spacer"></span>
+    <span class="hint" id="trainHint"></span>
+    <button class="icon-btn min-btn" title="Minimize">–</button></header>
+  <div class="panel-body">
+    <div class="train-row">
+      <button class="btn ghost small" id="playBtn" title="Play / pause">▶</button>
+      <input type="range" id="leadSlider" min="-130" max="2186" step="1" value="1028">
+      <div class="xyz lead"><span class="chip x">lead</span><input id="leadInput" type="number" step="1" value="1028"></div>
+      <button class="btn ghost small" id="centreBtn" title="Train centred on the span">Centre</button>
+      <button class="btn ghost small" id="maxMBtn" title="Position that gives the largest bending moment">Max M</button>
+      <button class="btn ghost small" id="maxVBtn" title="Position that gives the largest shear">Max V</button>
+    </div>
+    <div class="train-readouts">
+      <div class="ro"><span class="chip y">R<sub>A</sub></span><output id="roRA">—</output></div>
+      <div class="ro"><span class="chip y">R<sub>B</sub></span><output id="roRB">—</output></div>
+      <div class="ro"><span class="chip z">|V|max</span><output id="roV">—</output></div>
+      <div class="ro"><span class="chip m">M max</span><output id="roM">—</output></div>
+      <div class="ro wide" title="Factor of safety with the train parked at this position: the smallest capacity ÷ demand over the whole span and all 8 failure modes. Below 1 means this train breaks the bridge here."><span class="chip x">FOS at this position</span><output id="roFos">—</output><button class="btn ghost small calc-open fx-inline" data-src="pos" data-at="posfail" data-sec="fos" title="Show the formulas and numbers">ƒx</button></div>
+    </div>
+    <div class="train-row opts">
+      <label>Beam colour</label>
+      <div class="seg small" id="heatSeg"><button data-v="pos" class="on">Demand here</button><button data-v="env">Envelope</button><button data-v="off">Plain</button></div>
+      <label class="check"><input type="checkbox" id="showForces" checked> Forces</label>
+      <label class="check"><input type="checkbox" id="showTrain" checked> Train</label>
+      <span class="heat-legend">0%<i></i>200%+ of capacity</span>
+    </div>
+  </div>
+</aside>
+
+<!-- the little box that follows the mouse on the charts -->
+<div id="chartTip" hidden></div>
+
+<script src="view3d.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
