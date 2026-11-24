@@ -1,0 +1,11 @@
+{
+  "name": "civ-goats-bridge-sim-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Web frontend for the CIV-GOATS bridge simulator (algorithm.py)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": { "node": ">=16" }
+}
