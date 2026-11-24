@@ -1,0 +1,50 @@
+\documentclass{scrartcl}
+\usepackage{../brendan}
+
+\input{preamble.tex}
+
+\begin{document}
+\ihead{\textsc{Team 809}}
+\maketitle
+\begin{foreword}
+    The style for this document is a heavily modified version of \href{https://github.com/vEnhance}{Evan Chen}'s \texttt{evan.sty}. Attribution is included in the \texttt{.sty} file for this document, as required. 
+\end{foreword}
+\tableofcontents
+
+\newpage
+
+\section{Hand Calculations}
+note to self: import my cs preamble tex file later \\[0.5em]
+note to self 2: change the latex style slightly of each document (through preamble dot tex) to keep things interesting!
+
+\paragraph{Does this work testing 123}
+\begin{proof}
+    Testing the style changes. We have
+    \[
+    \begin{aligned}
+        3x+3&=4\\
+        3x&=1\\
+        x&=\answerbox{\frac13}\,\text{,}
+    \end{aligned}
+    \]
+    as desired.
+\end{proof}
+
+\begin{remark}
+    I love \LaTeX!
+\end{remark}
+
+\section{Evidence of Programming}
+
+\begin{foreword}
+    Source code for our bridge simulation and all uploaded documents can be found in a repository \href{https://github.com/Car-XY/CIV-GOATS-Bridge-Sim/}{here}.
+\end{foreword}
+
+\begin{minted}{python}
+# this is an example code block
+# I HOPE I REMEMBERED TO GITIGNORE THE OUTPUT FOLDER
+def f(x):
+    return x**2
+\end{minted}
+
+\end{document}
