@@ -1078,7 +1078,185 @@ $("secEdClose").onclick = () => { $("secEd").hidden = true; sec.open = false; };
 makeDraggable($("secEd"), $("secEdHead"));
 
 ////////////////////////////// frontend sec. 13 //////////////////////////////
-// 13. wiring up the buttons, then start
+// 13. importing a csv (replaces the rows in the table)
+//
+// two layouts work:
+//   table layout      xc, H, bft, bfb, nt, nb, nw, bg   (same columns as the editor table)
+//                     plus optional "# diaphragms: 0 400 800 1200" and "# glue_layers: 1" lines
+//   simulator layout  the 11 columns "Download CSV" gives you (xc,bft,tft,bfb,tfb,hw,tw,bg,tg,sw,a).
+//                     thicknesses get turned back into layer counts and the diaphragms are rebuilt from a
+// the header row is optional. without one, 8 columns = table layout and 11 = simulator layout
+
+let undoImport = null; // the design from before the last import, for the undo button
+
+// header names people might actually type -> our field names
+const IMPORT_ALIASES = {
+  xc: ["xc", "x", "position", "pos"],
+  H: ["h", "height", "totalheight"],
+  bft: ["bft", "topwidth", "topflangewidth", "deckwidth"],
+  bfb: ["bfb", "bottomwidth", "bottomflangewidth"],
+  nt: ["nt", "toplayers", "topflangelayers"],
+  nb: ["nb", "bottomlayers", "bottomflangelayers"],
+  nw: ["nw", "weblayers"],
+  bg: ["bg", "gluetabwidth", "gluetab", "tabwidth"],
+};
+const SIM_COLS = ["xc", "bft", "tft", "bfb", "tfb", "hw", "tw", "bg", "tg", "sw", "a"];
+// "Top flange width (mm)" -> "topflangewidth"
+const squash = (t) => t.toLowerCase().replace(/\(.*?\)/g, "").replace(/[^a-z]/g, "");
+
+// turns the file's text into { rows, dias, glue, layout, warnings }. throws an Error with a readable
+// message (and the line number) if something can't be used
+function parseBridgeCsv(text) {
+  let dias = null, glue = null;
+  const lines = [];
+  text.replace(/^﻿/, "").split(/\r?\n/).forEach((raw, i) => {
+    const t = raw.trim();
+    if (!t) return;
+    // "# diaphragms: ..." and "# glue_layers: ..." settings, any other # line is just a comment
+    if (t.startsWith("#")) {
+      const m = t.slice(1).match(/^\s*([a-z _]+)\s*[:=]\s*(.*)$/i);
+      if (m && squash(m[1]).startsWith("diaphragm")) dias = m[2].split(/[\s,;]+/).filter(Boolean).map((v) => num(v, i + 1, "diaphragm"));
+      if (m && squash(m[1]).startsWith("gluelayer")) glue = num(m[2].trim(), i + 1, "glue layers");
+      return;
+    }
+    lines.push({ n: i + 1, cells: t.split(/[,;\t]/).map((c) => c.trim().replace(/^"|"$/g, "")) });
+  });
+  if (!lines.length) throw new Error("The file has no rows in it.");
+
+  // header row? (any cell that isn't a number)
+  let header = null;
+  if (lines[0].cells.some((c) => c !== "" && !isFinite(Number(c)))) header = lines.shift();
+  if (lines.length < 2) throw new Error("A design needs at least 2 rows (one at 0 mm and one at 1200 mm).");
+
+  // work out which column is which
+  let layout, idx = {};
+  if (header) {
+    const names = header.cells.map(squash);
+    if (SIM_COLS.every((c) => names.includes(c))) { layout = "sim"; SIM_COLS.forEach((c) => (idx[c] = names.indexOf(c))); }
+    else {
+      layout = "table";
+      for (const [k, al] of Object.entries(IMPORT_ALIASES)) {
+        idx[k] = names.findIndex((nm) => al.includes(nm));
+        if (idx[k] < 0) throw new Error(`Line ${header.n}: couldn't find a column for ${NAMES[k].toLowerCase()} (expected one of: ${al.join(", ")}).`);
+      }
+    }
+  } else {
+    const w = lines[0].cells.length;
+    if (w === 11) { layout = "sim"; SIM_COLS.forEach((c, i) => (idx[c] = i)); }
+    else if (w === 8) { layout = "table"; FIELDS.forEach((f, i) => (idx[f.k] = i)); }
+    else throw new Error(`Line ${lines[0].n} has ${w} columns. Use 8 (xc, H, bft, bfb, nt, nb, nw, bg) or the 11 simulator columns, or add a header row.`);
+  }
+  const val = (ln, k) => num(ln.cells[idx[k]], ln.n, k);
+
+  const warnings = [];
+  let rows;
+  if (layout === "table") {
+    rows = lines.map((ln) => Object.fromEntries(FIELDS.map((f) => [f.k, val(ln, f.k)])));
+  } else {
+    // simulator layout: thickness -> layers, and they have to come out whole
+    const layers = (v, ln, k) => {
+      const n = Math.round(v / LAYER);
+      if (n < 1 || Math.abs(n * LAYER - v) > 0.005) throw new Error(`Line ${ln.n}: ${k} = ${v} mm isn't a whole number of 1.27 mm layers.`);
+      return n;
+    };
+    const sim = lines.map((ln) => Object.fromEntries(SIM_COLS.map((c) => [c, val(ln, c)])));
+    rows = sim.map((r, i) => {
+      const ln = lines[i], tw = r.tw;
+      if (Math.abs(r.sw - (r.bfb - tw)) > 0.01) warnings.push(`Line ${ln.n}: sw = ${r.sw} isn't bottom width − web thickness (${r4(r.bfb - tw)}). The editor always works sw out itself, so this one was ignored.`);
+      return { xc: r.xc, H: r4(r.tft + r.tfb + r.hw), bft: r.bft, bfb: r.bfb, nt: layers(r.tft, ln, "tft"), nb: layers(r.tfb, ln, "tfb"), nw: layers(r.tw, ln, "tw"), bg: r.bg };
+    });
+    // glue tab layers are one setting for the whole bridge
+    const g = sim.map((r, i) => layers(r.tg, lines[i], "tg"));
+    if (new Set(g).size > 1) throw new Error(`Glue tab thickness changes along the bridge (${[...new Set(g)].map((n) => r4(n * LAYER)).join(", ")} mm). The editor only has one glue tab layer count for the whole bridge.`);
+    if (glue == null) glue = g[0];
+    // rebuild the diaphragms by walking along the span: each one is "a" further than the last
+    if (dias == null) {
+      const aAt = (p) => { let a = sim[0].a; for (const r of sim) if (r.xc <= p) a = r.a; return a; };
+      const ds = [0];
+      while (ds[ds.length - 1] < L - 1e-6 && ds.length < 500) ds.push(r4(ds[ds.length - 1] + aAt(ds[ds.length - 1])));
+      if (Math.abs(ds[ds.length - 1] - L) < 1e-3) { ds[ds.length - 1] = L; dias = ds; }
+      else warnings.push("Couldn't work out the diaphragm positions from the a column, so the current diaphragms were kept.");
+    }
+    // drop the "1 mm before a change" rows that the export adds, the editor puts them back by itself
+    rows = rows.filter((r, i) => i === 0 || i === rows.length - 1 || !(rows[i + 1].xc - r.xc <= 1 + 1e-9));
+    // the export also adds a row everywhere the diaphragm spacing changes. if a row has the same layers as
+    // the one before and its height/widths sit on the straight line between its neighbours, the table
+    // doesn't need it, so take it out (the analysis comes out exactly the same either way)
+    const onLine = (a, m, b, k) => Math.abs(a[k] + ((b[k] - a[k]) * (m.xc - a.xc)) / (b.xc - a.xc) - m[k]) < 0.005;
+    for (let i = 1; i < rows.length - 1; ) {
+      const a = rows[i - 1], m = rows[i], b = rows[i + 1];
+      const spare = a.nt === m.nt && a.nb === m.nb && a.nw === m.nw && ["H", "bft", "bfb", "bg"].every((k) => onLine(a, m, b, k));
+      if (spare) rows.splice(i, 1); else i++;
+    }
+  }
+
+  // the first and last positions are locked in the table, so they have to be right in the file
+  if (rows[0].xc !== 0) throw new Error(`The first row has to be at 0 mm (the file's first row is at ${rows[0].xc} mm).`);
+  if (rows[rows.length - 1].xc !== L) throw new Error(`The last row has to be at ${L} mm (the file's last row is at ${rows[rows.length - 1].xc} mm).`);
+  if (dias && (!dias.includes(0) || !dias.includes(L))) throw new Error(`The diaphragm list has to include 0 and ${L} mm.`);
+  return { rows, dias, glue, layout, warnings };
+}
+
+// "12.5" -> 12.5, anything else -> an error that says where
+function num(c, line, what) {
+  const v = Number(c);
+  if (c === undefined || c === "" || !isFinite(v)) throw new Error(`Line ${line}: ${what} "${c ?? ""}" isn't a number.`);
+  return v;
+}
+
+// reads the file and swaps the table over. the old design is kept so undo can bring it back
+function importCsvFile(file) {
+  if (!file) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    let got;
+    try { got = parseBridgeCsv(String(rd.result)); }
+    catch (e) { return showImportNote(`Couldn't import ${esc(file.name)}: ${esc(e.message)}`, "bad"); }
+    undoImport = JSON.stringify(S);
+    S = { rows: got.rows, dias: got.dias ? [...got.dias].sort((a, b) => a - b) : S.dias, glue: got.glue ?? S.glue };
+    sel = 0;
+    $("glueLayers").value = S.glue;
+    renderDias();
+    refresh();
+    const what = got.layout === "sim" ? "simulator columns" : "table columns";
+    showImportNote(`Imported ${got.rows.length} rows from ${esc(file.name)} (${what})` +
+      (got.dias ? `, diaphragms at ${got.dias.join(", ")} mm` : "") + ". " +
+      `<button class="btn ghost small" id="undoImportBtn">Undo</button>` +
+      got.warnings.map((w) => `<div class="warn-line">! ${esc(w)}</div>`).join(""), "good");
+    $("undoImportBtn").onclick = () => {
+      if (!undoImport) return;
+      S = JSON.parse(undoImport); undoImport = null; sel = 0;
+      $("glueLayers").value = S.glue;
+      renderDias(); refresh();
+      showImportNote("Import undone.", "");
+    };
+  };
+  rd.onerror = () => showImportNote(`Couldn't read ${esc(file.name)}.`, "bad");
+  rd.readAsText(file);
+}
+
+// the little message under the import button (html is built by us, file names are escaped)
+function showImportNote(html, kind) {
+  const el = $("importNote");
+  el.className = "import-note " + (kind || "");
+  el.innerHTML = html;
+  el.hidden = false;
+}
+
+$("importBtn").onclick = () => $("csvFile").click();
+$("csvFile").addEventListener("change", (e) => { importCsvFile(e.target.files[0]); e.target.value = ""; }); // reset so the same file can be picked again
+// dropping a .csv anywhere on the editor panel works too
+$("editor").addEventListener("dragover", (e) => { if ([...e.dataTransfer.types].includes("Files")) { e.preventDefault(); $("editor").classList.add("file-over"); } });
+$("editor").addEventListener("dragleave", (e) => { if (!$("editor").contains(e.relatedTarget)) $("editor").classList.remove("file-over"); });
+$("editor").addEventListener("drop", (e) => {
+  $("editor").classList.remove("file-over");
+  if (!e.dataTransfer.files.length) return;
+  e.preventDefault();
+  importCsvFile(e.dataTransfer.files[0]);
+});
+
+////////////////////////////// frontend sec. 14 //////////////////////////////
+// 14. wiring up the buttons, then start
 document.querySelectorAll(".group h3").forEach((h) => h.addEventListener("click", () => {
   const s = h.parentElement, open = s.dataset.open !== "1";
   s.dataset.open = open ? "1" : "0";

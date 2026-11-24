@@ -50,7 +50,11 @@
           </table>
         </div>
         <div class="inline"><button class="btn ghost" id="addRowBtn">+ Add row</button>
-          <button class="btn ghost" id="secEdBtn" title="Open the selected row in the 2D cross-section editor">✎ Edit section in 2D</button></div>
+          <button class="btn ghost" id="secEdBtn" title="Open the selected row in the 2D cross-section editor">✎ Edit section in 2D</button>
+          <!-- import replaces every row. accepts the table columns or the 11 columns from "Download CSV" -->
+          <button class="btn ghost" id="importBtn" title="Replace the rows with a .csv file. Columns: xc, H, bft, bfb, nt, nb, nw, bg (like the table) or the 11 simulator columns from Download CSV. You can also drop a file on this panel.">⇪ Import CSV</button>
+          <input type="file" id="csvFile" accept=".csv,.txt,text/csv" hidden></div>
+        <div id="importNote" hidden></div>
         <p class="note">Drag <span class="grip-demo">⠿</span> to reorder middle rows (positions stay in order, the sections move). T = top flange, B = bottom (outer width of the U), W = webs. Each layer is 1.27 mm.</p>
       </div>
     </section>

@@ -29,6 +29,15 @@ Open http://localhost:3000. Use `PORT=4000` to change the port, or `PYTHON=path/
 - **Deck stays flat.** Total height hangs *down* from a level deck. The ends rest on the supports, so the deck sits
   at the end height above them. The *Handout checks* list flags §1.5 rules (deck height a multiple of 20 mm and
   under 200 mm, flat 60 mm bearings, bottom within 200 mm / 30° below the supports, deck ≥ 100 mm wide).
+- **⇪ Import CSV** (or drop a .csv on the editor panel) replaces every row. Two layouts work:
+  - the table's own columns, header optional: `xc, H, bft, bfb, nt, nb, nw, bg`
+    (or names like `Position, Total height, Top flange width, ...`), plus optional lines
+    `# diaphragms: 0, 400, 800, 1200` and `# glue_layers: 1`
+  - the 11 columns from **Download CSV**. Thicknesses become layer counts again, the diaphragms are rebuilt
+    from `a`, and the extra rows the export adds are removed, so export → import gives back the same table.
+
+  Files that can't be built are rejected with the line number (e.g. a thickness that isn't a whole number of
+  1.27 mm layers, or first/last rows not at 0 and 1200). **Undo** restores the table from before the import.
 - **Reorder rows** by dragging the ⠿ handle on any middle row. Positions stay in increasing order; the section moves.
 - **3D view:** drag to orbit, right-drag (or Shift-drag) to pan, scroll to zoom, double-click to reset.
   Built-in canvas renderer, no libraries or internet needed.

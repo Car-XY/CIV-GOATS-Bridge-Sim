@@ -102,7 +102,7 @@ table.mono th{color:var(--dim);font-weight:400}
 .btn.primary:hover{background:#f3a648}
 .btn.primary:disabled{opacity:.5;cursor:wait}
 #addRowBtn{margin-top:6px}
-.inline{display:flex;gap:4px;align-items:center}
+.inline{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
 .inline input{width:70px}
 .pill-sep{width:8px}
 .chips-input{display:flex;flex-wrap:wrap;gap:4px;min-height:22px}
@@ -242,3 +242,13 @@ canvas.chart{cursor:crosshair}
 #secErrs .err{background:#3a1f1d;border-left:3px solid var(--bad);padding:4px 6px;margin-top:6px;color:#f0c6c2;font-size:11px}
 .row-ed{background:none;border:none;color:var(--dim);cursor:pointer;font-size:12px;width:18px;padding:0}
 .row-ed:hover{color:var(--accent)}
+
+/* ////////////////////////////// style sec. 9 ////////////////////////////// */
+/* 9. csv import */
+.import-note{margin-top:6px;padding:5px 8px;font-size:11.5px;border-left:3px solid var(--dim);background:#262626}
+.import-note.good{border-color:var(--good);color:#cfe8c4}
+.import-note.bad{border-color:var(--bad);color:#f0c6c2}
+.import-note .btn{margin-left:6px;height:20px;padding:0 8px}
+.import-note .warn-line{color:#eadbb6;margin-top:3px}
+/* outline the editor while a file is dragged over it */
+#editor.file-over{outline:2px dashed var(--accent);outline-offset:-4px}
