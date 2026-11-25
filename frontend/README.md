@@ -3,7 +3,11 @@
 A small Node.js + HTML/CSS/JS UI for entering bridge designs and running them through `../algorithm.py`.
 `algorithm.py` is **not modified**: `runner.py` imports it and calls its functions.
 
-## Run
+## Live version
+
+https://car-xy.github.io/CIV-GOATS-Bridge-Sim/. The first run takes a few seconds while Python downloads ("Loading Python…").
+
+## Run locally
 
 Requirements: Node.js 16+, Python 3 with `numpy` and `matplotlib` (the same things `algorithm.py` needs). No npm packages.
 
