@@ -369,10 +369,21 @@ function baseRequest() {
     loco_leading: loco,
   };
 }
-// POST to server.js, which passes it to runner.py and gives back its json
+
+// npm start → server.js runs the real python. github pages (no server) → pyodide in the browser
+let useServer = null; // decided on the first call
 async function api(body) {
-  const res = await fetch("/api/simulate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  return res.json();
+  if (useServer !== false) {
+    try {
+      const res = await fetch("api/simulate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (res.ok && (res.headers.get("Content-Type") || "").includes("json")) { useServer = true; return res.json(); }
+    } catch {}
+    if (useServer === true) throw new Error("server stopped responding");
+    useServer = false;
+  }
+  const py = await window.startPy();
+  py.globals.set("REQ", JSON.stringify(body));
+  return JSON.parse(py.runPython("import json, runner; json.dumps(runner.handle(json.loads(REQ)))"));
 }
 
 // the moving train run (the "Failure" panel). the button calls it, and with "Live" on it also runs ~350 ms

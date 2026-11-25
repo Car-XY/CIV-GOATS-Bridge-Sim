@@ -177,4 +177,6 @@ TSWLatexianTemp*
 *.sta
 *.lpz
 *.xwm
-my-snippets.js
+
+# :)
+frontend/public/py/
