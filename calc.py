@@ -44,8 +44,7 @@ print()
 #################### summary table ####################
 # i am 100% aware there is a better way to go about this, don't worry :)
 FOS = factors_of_safety(S_top, S_bot, T_cent, T_glue, S_web, S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck)
-names = ["Tension", "Compression", "Wall shear", "Glue shear", "Flange buckling",
-         "Flange tip buckling", "Web flexural buckling", "Web shear buckling"]
+names = ["Tension", "Compression", "Wall shear", "Glue shear", "Flange buckling", "Flange tip buckling", "Web flexural buckling", "Web shear buckling"]
 applied = [S_bot, S_top, T_cent, T_glue, S_top, S_top, S_web, T_cent]
 crit = [S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck]
 
@@ -58,8 +57,8 @@ line = ""
 for word in header:
     word = str(word)
     while len(word) < 24:
-        word = word + " "
-    line = line + word
+        word += " "
+    line += word
 print(line)
 
 for row in table:
@@ -70,8 +69,8 @@ for row in table:
         else:
             value = f"{value:.3f}"
         while len(value) < 24:
-            value = value + " "
-        line = line + value
+            value += " "
+        line += value
     print(line)
 
 worst = table[0]

@@ -47,9 +47,10 @@ Case & Failure mode & Applied (MPa) & Crit (MPa) & FOS \\
 \newpage
 \section{Evidence of Programming}
 \subsection{Basic Calculations Output}
-\begin{note}
-    This is the code output of \textbf{all intermediate calculations} performed in the hand calculations of Design 0 under a moving $400\unit{N}$ train according to Load Case 1. 
-\end{note}
+Here is the code output of \textbf{all intermediate calculations} performed in the hand calculations of Design 0 under a moving $400\unit{N}$ train according to Load Case 1. 
+\begin{center}
+    \makebox[\linewidth][c]{\includegraphics[width=\dimexpr\linewidth+2\btCodeGrow\relax]{../images/codeoutput-1.png}}
+\end{center}
 
 \subsection{Matplotlib Output}
 \begin{note}
@@ -66,11 +67,10 @@ Case & Failure mode & Applied (MPa) & Crit (MPa) & FOS \\
     The repository containing all of our \mintinline{text}{.py} and \mintinline{text}{.tex} files can be found \href{https://github.com/Car-XY/CIV-GOATS-Bridge-Sim}{here}. We also built a frontend for our program, which has been deployed \href{https://car-xy.github.io/CIV-GOATS-Bridge-Sim/}{here}.
 \end{foreword}
 
-Here is our main script, \mintinline{text}{algorithm.py}, which contains all of the required functions as per the MATLAB pseudocode. The libraries we used were NumPy and Matplotlib.
+\paragraph{Script 1.} Here is our main script, \mintinline{text}{algorithm.py}, which contains all of the required functions as per the MATLAB pseudocode. The libraries we used were NumPy and Matplotlib.
 \input{algorithm.tex}
-\vspace{1em}
 
-Here is our helper script, \mintinline{text}{calc.py} which outputs all of the results
+\paragraph{Script 2.} Here is our helper script, \mintinline{text}{calc.py} which outputs all of the results
 \input{calc.tex} 
 
 \end{document}
