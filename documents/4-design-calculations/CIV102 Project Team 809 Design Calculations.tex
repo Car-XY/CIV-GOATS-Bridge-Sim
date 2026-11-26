@@ -10,11 +10,34 @@
 
 \newpage
 
-\section{Hand Calculations}
-\subsection{Design 0}
-\begin{note}
-    These calculations determine the \textbf{FoS against failure} and \textbf{failure mode} for Design 0 under a moving $400\unit{N}$ train according to Load Case 1. 
-\end{note}
+\section{Hand Calculations} \vspace{-0.5em}
+\subsection{Design 0} \vspace{-0.5em}
+Here are our hand calculations to determine the \textbf{FoS against failure} and \textbf{failure mode} for Design 0 under a moving $400\unit{N}$ train according to Load Case 1. 
+\vspace{-0.5em}
+\enlargethispage{3cm} % this feels so wrong to do but that's ok
+                      % wait you're actually reading the latex source???
+                      % hi! what the heck "easter eggs" in latex thats crazy
+\begin{center}
+    \includegraphics[width=\linewidth, height=0.9\textheight, keepaspectratio]{../images/handwritten-1-FINAL.png}
+\end{center}
+\paragraph{Summary.} As shown above, the failure mode for \textbf{Design 0} is \answerbox{\textbf{Flange Buckling}}$\,$, with an FoS of $0.617$. Here is a typeset version of the table from above.
+\begin{center}
+\begin{tabular}{clccc}
+\toprule
+Case & Failure mode & Applied (MPa) & Crit (MPa) & FOS \\
+\midrule
+1 & Tension (bottom) & 6.88 & 30.0 & 4.36 \\
+2 & Compression (top) & 5.79 & 6.00 & 1.04 \\
+3 & Wall shear & 1.499 & 4.00 & 2.67 \\
+4 & Glue shear & 0.213 & 2.00 & 9.39 \\
+\rowcolor{ThmBlue!12} % lol this isnt blue either, see if you can figure out why its called thmblue :) - hint: it may help to look at ALL the different documents we submitted
+5 & Flange buckling (between webs) & 5.79 & 3.57 & \textbf{0.617} \\
+6 & Flange tip buckling & 5.79  & 20.8 & 3.59 \\
+7 & Web flexural buckling & 5.58 & 29.4 & 5.28 \\
+8 & Web shear buckling & 1.499 & 5.26 & 3.51 \\
+\bottomrule
+\end{tabular}
+\end{center}
 
 \subsection{Our Design}
 \begin{note}
@@ -46,6 +69,7 @@
 Here is our main script, \mintinline{text}{algorithm.py}, which contains all of the required functions as per the MATLAB pseudocode. The libraries we used were NumPy and Matplotlib.
 \input{algorithm.tex}
 \vspace{1em}
+
 Here is our helper script, \mintinline{text}{calc.py} which outputs all of the results
 \input{calc.tex} 
 
