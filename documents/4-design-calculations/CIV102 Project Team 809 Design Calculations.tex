@@ -45,22 +45,31 @@ Case & Failure mode & Applied (MPa) & Crit (MPa) & FOS \\
 \end{note}
 
 \newpage
-\section{Evidence of Programming}
-\subsection{Basic Calculations Output}
+\section{Evidence of Programming} \vspace{-0.5em} % :( having to do this saddens me
+\subsection{Basic Calculations Output} \vspace{-0.5em}
 Here is the code output of \textbf{all intermediate calculations} performed in the hand calculations of Design 0 under a moving $400\unit{N}$ train according to Load Case 1. You can also see the code output for all \textbf{FoS values} along the bridge for Load Case 1.
 \begin{center}
-    \makebox[\linewidth][c]{\includegraphics[width=\dimexpr\linewidth+2\btCodeGrow\relax]{../images/codeoutput-1.png}}
+    \includegraphics[width=\linewidth]{../images/codeoutput-1.png}
+\end{center}
+\vspace{-1em}
+\subsection{Matplotlib Output} \vspace{-0.5em}
+Here is a graphical presentation of all \textbf{shear force capacities} and \textbf{bending moment capacities} of Design 0 for Load Case 1. \vspace{-0.5em}
+\begin{center}
+    \makebox[\linewidth][c]{\includegraphics[width=\dimexpr\linewidth+2\btCodeGrow\relax]{../images/plots1a.png}}
+\end{center}
+\begin{center}
+    \makebox[\linewidth][c]{\includegraphics[width=\dimexpr\linewidth+2\btCodeGrow\relax]{../images/plots1b.png}}
 \end{center}
 
-\subsection{Matplotlib Output}
+\subsection{Our Design}
 \begin{note}
-    This is a graphical presentation of all \textbf{shear force capacities} and \textbf{bending moment capacities} of Design 0 for Load Case 1 and for our final design under Load Case 2.
+    Here is the code output of all \textbf{FoS values} and a graphical presentation of all \textbf{shear force capacities} and \textbf{bending moment capaticies} for our final design under Load Case 2.
 \end{note}
+\paragraph{Code output} 
+Code output goes here
 
-\subsection{FoS Output}
-\begin{note}
-    This is the code output of all \textbf{FoS values} along the bridge for Load Case 1 and for our final design under Load Case 2.
-\end{note}
+\paragraph{Matplotlib output}
+Matplotlib output goes here
 
 \subsection{Our Scripts}
 \begin{foreword}
