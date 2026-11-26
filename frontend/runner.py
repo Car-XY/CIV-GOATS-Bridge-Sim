@@ -84,15 +84,14 @@ def setup(req):
                                "Reduce top flange layers or increase the height."}
     with np.errstate(divide="ignore", invalid="ignore"):
         caps = alg.capacities(bft, tft, tw, hw, sw, a, ytop)
-    s = dict(x=x, wo=wo, wl=wl, tw=tw, bg=bg, ybar=ybar, ybot=ybot, ytop=ytop, I=I,
-             Qcent=Qcent, Qglue=Qglue, caps=caps)
+    s = dict(x=x, wo=wo, wl=wl, tw=tw, tft=tft, bg=bg, ybar=ybar, ybot=ybot, ytop=ytop, I=I, Qcent=Qcent, Qglue=Qglue, caps=caps)
     return s, None
 
 
 # FOS arrays (sec. 4 + 6) for a shear V(x) >= 0 and a moment M(x)
 def fos_for(s, V, M):
     with np.errstate(divide="ignore", invalid="ignore"):
-        stress = alg.applied_stress(V, M, s["ybot"], s["ytop"], s["I"], s["Qcent"], s["Qglue"], s["tw"], s["bg"])
+        stress = alg.applied_stress(V, M, s["ybot"], s["ytop"], s["I"], s["Qcent"], s["Qglue"], s["tw"], s["bg"], s["tft"])
         return alg.factors_of_safety(*stress, *s["caps"])
 
 
@@ -131,7 +130,7 @@ def run_envelope(req):
     fos = fos_for(s, SFD, BMD)
     with np.errstate(divide="ignore", invalid="ignore"):
         minFOS, Pf, weakest, x_fail = alg.failure_load(*fos)
-        fenv = alg.failure_envelopes(*s["caps"], s["I"], s["ybot"], s["ytop"], s["Qcent"], s["Qglue"], s["tw"], s["bg"])
+        fenv = alg.failure_envelopes(*s["caps"], s["I"], s["ybot"], s["ytop"], s["Qcent"], s["Qglue"], s["tw"], s["bg"], s["tft"])
 
     env_names = ["Mf_tens", "Mf_comp", "Vf_shear", "Vf_glue", "Mf_buck1", "Mf_buck2", "Mf_buck3", "Vf_buckV"]
     envs = {n: clean(np.broadcast_to(np.asarray(e, dtype=float), x.shape)[::EVERY]) for n, e in zip(env_names, fenv)}
@@ -344,10 +343,11 @@ def run_explain(req):
     # 7. applied stresses (sec. 4)
     F64 = np.float64  # numpy floats so x/0 gives inf like the array version does, plain floats would crash
     with np.errstate(divide="ignore", invalid="ignore"):
-        S_top, S_bot, T_cent, T_glue = (float(v) for v in alg.applied_stress(F64(V), F64(M), F64(ybot), F64(ytop), F64(I), F64(Qcent), F64(Qglue), F64(tw), F64(bg)))
+        S_top, S_bot, T_cent, T_glue, S_web = (float(v) for v in alg.applied_stress(F64(V), F64(M), F64(ybot), F64(ytop), F64(I), F64(Qcent), F64(Qglue), F64(tw), F64(bg), F64(tft)))
     secs.append({"id": "stress", "title": "7 · Applied stresses", "steps": [
         step("σ_top (compression)", "σ_top = M·y_top / I", f"{f(M, 0)}×{f(ytop, 3)} / {f(I, 0)}", f(S_top, 4), "MPa"),
         step("σ_bot (tension)", "σ_bot = M·y_bot / I", f"{f(M, 0)}×{f(ybot, 3)} / {f(I, 0)}", f(S_bot, 4), "MPa"),
+        step("σ_web (top of webs)", "σ_web = M·(y_top − t_ft) / I", f"{f(M, 0)}×({f(ytop, 3)} − {f(tft, 2)}) / {f(I, 0)}", f(S_web, 4), "MPa"),
         step("τ_cent", "τ_cent = V·Q_cent / (I·2t_w)", f"{f(V, 2)}×{f(Qcent, 1)} / ({f(I, 0)}×2×{f(tw, 2)})", f(T_cent, 4), "MPa"),
         step("τ_glue", "τ_glue = V·Q_glue / (I·2(b_g + t_w))", f"{f(V, 2)}×{f(Qglue, 1)} / ({f(I, 0)}×2×({f(bg, 2)} + {f(tw, 2)}))", f(T_glue, 4), "MPa")]})
 
@@ -365,12 +365,12 @@ def run_explain(req):
 
     # 9. FOS (sec. 6 + 7)
     with np.errstate(divide="ignore", invalid="ignore"):
-        fos = [float(v) for v in alg.factors_of_safety(*(F64(t) for t in (S_top, S_bot, T_cent, T_glue, *caps)))]
+        fos = [float(v) for v in alg.factors_of_safety(*(F64(t) for t in (S_top, S_bot, T_cent, T_glue, S_web, *caps)))]
     pairs = [("tension", "σ_t / σ_bot", caps[0], S_bot), ("compression", "σ_c / σ_top", caps[1], S_top),
              ("shear", "τ_m / τ_cent", caps[2], T_cent), ("glue", "τ_glue / τ_glue,applied", caps[3], T_glue),
              ("buckling in the middle flange", "σ_buck1 / σ_top", caps[4], S_top),
              ("buckling in the side flanges", "σ_buck2 / σ_top", caps[5], S_top),
-             ("buckling in the webs", "σ_buck3 / σ_top", caps[6], S_top), ("shear buckling", "τ_buck / τ_cent", caps[7], T_cent)]
+             ("buckling in the webs", "σ_buck3 / σ_web", caps[6], S_web), ("shear buckling", "τ_buck / τ_cent", caps[7], T_cent)]
     valid = [v if (math.isfinite(v) and v > 0) else math.inf for v in fos]
     mi = int(np.argmin(valid))
     rows_f = [[nm, frm, f(c, 4), f(dmd, 4), f(valid[i]) if math.isfinite(valid[i]) else "∞", f(valid[i] * P, 1) if math.isfinite(valid[i]) else "∞"]
