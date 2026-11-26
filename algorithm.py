@@ -176,11 +176,12 @@ def sectional_properties(bft, tft, bfb, tfb, hw, tw, bg, tg):
 ############################## matlab sec. 4 ##############################
 # 4. Calculate Applied Stress
 
-def applied_stress(SFD, BMD, ybot, ytop, I, Qcent, Qglue, tw, bg):
+def applied_stress(SFD, BMD, ybot, ytop, I, Qcent, Qglue, tw, bg, tft):
     S_top = BMD * ytop / I
     S_bot = BMD * ybot / I
     T_cent = SFD * Qcent / (I * 2 * tw)
     T_glue = SFD * Qglue / (I * 2 * (bg + tw))
+    S_web = BMD * (ytop - tft) / I
     return S_top, S_bot, T_cent, T_glue
 
 ############################## matlab sec. 5 ##############################
@@ -203,14 +204,14 @@ def capacities(bft, tft, tw, hw, sw, a, ytop):
 ############################## matlab sec. 6 ##############################
 # 6. FOS
 
-def factors_of_safety(S_top, S_bot, T_cent, T_glue, S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck):
+def factors_of_safety(S_top, S_bot, T_cent, T_glue, S_web, S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck):
     FOS_tens = S_tens / S_bot
     FOS_comp = S_comp / S_top
     FOS_shear = T_max / T_cent
     FOS_glue = T_gmax / T_glue
     FOS_buck1 = S_buck1 / S_top
     FOS_buck2 = S_buck2 / S_top
-    FOS_buck3 = S_buck3 / S_top
+    FOS_buck3 = S_buck3 / S_web
     FOS_buckV = T_buck / T_cent
     return FOS_tens, FOS_comp, FOS_shear, FOS_glue, FOS_buck1, FOS_buck2, FOS_buck3, FOS_buckV
 
@@ -248,14 +249,14 @@ def failure_load(FOS_tens, FOS_comp, FOS_shear, FOS_glue,
 ############################## matlab sec. 8 ##############################
 # 8. Vfail and Mfail
 
-def failure_envelopes(S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck, I, ybot, ytop, Qcent, Qglue, tw, bg):
+def failure_envelopes(S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck, I, ybot, ytop, Qcent, Qglue, tw, bg, tft):
     Mf_tens = S_tens * I / ybot
     Mf_comp = S_comp * I / ytop
     Vf_shear = T_max * I * 2 * tw / Qcent
     Vf_glue = T_gmax * I * 2 * (bg + tw) / Qglue
     Mf_buck1 = S_buck1 * I / ytop
     Mf_buck2 = S_buck2 * I / ytop
-    Mf_buck3 = S_buck3 * I / ytop
+    Mf_buck3 = S_buck3 * I / (ytop - tft)
     Vf_buckV = T_buck * I * 2 * tw / Qcent
     return Mf_tens, Mf_comp, Vf_shear, Vf_glue, Mf_buck1, Mf_buck2, Mf_buck3, Vf_buckV
 
