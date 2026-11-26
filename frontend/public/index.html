@@ -22,19 +22,18 @@
     <button data-view="iso" class="on">3D</button><button data-view="side">Side</button><button data-view="end">End</button><button data-view="top">Top</button>
   </div>
   <label class="check" title="Make the side of the beam facing you see-through so the diaphragms show"><input type="checkbox" id="xray"> X-ray front</label>
-  <span class="viewhint">Drag to orbit · right-drag to pan · scroll to zoom</span>
 </div>
 
 <!-- ############################## left: bridge editor ############################## -->
 <aside class="panel" id="editor">
-  <header class="panel-title"><span class="title-text">Bridge Editor</span><span class="spacer"></span>
+  <header class="panel-title"><span class="title-text">Bridge editor</span><span class="spacer"></span>
     <button class="icon-btn" id="runIcon" title="Run simulation (Ctrl+Enter)">▶</button>
     <button class="icon-btn" id="resetBtn" title="Reset to Design 0">⟲</button>
     <button class="icon-btn min-btn" title="Minimize">–</button></header>
   <div class="panel-body">
     <section class="group" data-open="1">
       <!-- one row per cross-section. app.js fills in tbody -->
-      <h3><span class="caret">▼</span>Cross-sections <span class="hint">mm · deck stays flat, height hangs down</span></h3>
+      <h3><span class="caret">▼</span>Cross-sections <span class="hint">mm</span></h3>
       <div class="group-body">
         <div class="table-wrap">
           <table id="rowsTable">
@@ -50,9 +49,9 @@
           </table>
         </div>
         <div class="inline"><button class="btn ghost" id="addRowBtn">+ Add row</button>
-          <button class="btn ghost" id="secEdBtn" title="Open the selected row in the 2D cross-section editor">✎ Edit section in 2D</button>
+          <button class="btn ghost" id="secEdBtn" title="Open the selected row in the 2D cross-section editor">Edit section in 2D</button>
           <!-- import replaces every row. accepts the table columns or the 11 columns from "Download CSV" -->
-          <button class="btn ghost" id="importBtn" title="Replace the rows with a .csv file. Columns: xc, H, bft, bfb, nt, nb, nw, bg (like the table) or the 11 simulator columns from Download CSV. You can also drop a file on this panel.">⇪ Import CSV</button>
+          <button class="btn ghost" id="importBtn" title="Replace the rows with a .csv file. Columns: xc, H, bft, bfb, nt, nb, nw, bg (like the table) or the 11 simulator columns from Download CSV. You can also drop a file on this panel.">Import CSV</button>
           <input type="file" id="csvFile" accept=".csv,.txt,text/csv" hidden></div>
         <div id="importNote" hidden></div>
         <p class="note">Drag <span class="grip-demo">⠿</span> to reorder middle rows (positions stay in order, the sections move). T = top flange, B = bottom (outer width of the U), W = webs. Each layer is 1.27 mm.</p>
@@ -94,7 +93,7 @@
 
     <section class="group" data-open="0">
       <!-- what actually gets sent to algorithm.py, collapsed by default -->
-      <h3><span class="caret">▶</span>Simulator rows <span class="hint">11-column CSV sent to algorithm.py</span></h3>
+      <h3><span class="caret">▶</span>Simulator rows</h3>
       <div class="group-body">
         <div class="table-wrap"><table id="csvTable" class="mono"></table></div>
         <button class="btn ghost small" id="csvBtn">Download CSV</button>
@@ -110,19 +109,19 @@
 
 <!-- ############################## right: results (moving train) ############################## -->
 <aside class="panel" id="results">
-  <header class="panel-title"><span class="title-text">Simulation Results</span><span class="spacer"></span>
+  <header class="panel-title"><span class="title-text">Simulation results</span><span class="spacer"></span>
     <button class="icon-btn fx-btn" id="calcIcon" title="Show the formulas and numbers">ƒx</button>
     <button class="icon-btn min-btn" title="Minimize">–</button></header>
   <div class="panel-body">
     <section class="group" data-open="1">
-      <h3><span class="caret">▼</span>Failure <span class="hint">moving train, all positions</span></h3>
+      <h3><span class="caret">▼</span>Failure</h3>
       <div class="group-body">
         <div class="big"><span id="pFail">—</span><small>N</small></div>
         <div class="field"><label>Mode</label><div class="readout" id="mode">—</div></div>
         <div class="field"><label>Location</label><div class="xyz"><span class="chip x">x</span><output id="xFail">—</output><span class="chip m">FOS</span><output id="minFos">—</output></div></div>
         <div class="field"><label>Train weight</label><div class="xyz"><span class="chip z">P</span><output id="trainW">—</output></div></div>
         <p class="verdict" id="verdict"></p>
-        <button class="btn ghost small calc-open" data-src="env" data-at="fail" data-sec="fos">ƒx Show calculation</button>
+        <button class="btn ghost small calc-open" data-src="env" data-at="fail" data-sec="fos">Show calculation</button>
       </div>
     </section>
 
@@ -131,23 +130,23 @@
       <div class="group-body">
         <div class="field"><label>Centroid ȳ</label><div class="xyz"><span class="chip y">mm</span><output id="ybar">—</output></div></div>
         <div class="field"><label>I</label><div class="xyz"><span class="chip z">mm⁴</span><output id="Ival">—</output></div></div>
-        <button class="btn ghost small calc-open" data-src="env" data-x="600" data-sec="centroid">ƒx Show calculation</button>
+        <button class="btn ghost small calc-open" data-src="env" data-x="600" data-sec="centroid">Show calculation</button>
       </div>
     </section>
 
     <section class="group" data-open="1">
-      <h3><span class="caret">▼</span>Failure load by mode <span class="hint">click a mode for its calculation</span></h3>
+      <h3><span class="caret">▼</span>Failure load by mode</h3>
       <div class="group-body"><div id="modes"></div></div>
     </section>
 
     <!-- the two charts, same idea as output_plots() in algorithm.py -->
     <section class="group" data-open="1">
-      <h3><span class="caret">▼</span>Shear force vs capacity <span class="hint">hover for values · click to pin</span></h3>
+      <h3><span class="caret">▼</span>Shear force vs capacity</h3>
       <div class="group-body"><canvas class="chart" id="sfdChart"></canvas><div class="legend" id="sfdLegend"></div></div>
     </section>
 
     <section class="group" data-open="1">
-      <h3><span class="caret">▼</span>Bending moment vs capacity <span class="hint">hover for values · click to pin</span></h3>
+      <h3><span class="caret">▼</span>Bending moment vs capacity</h3>
       <div class="group-body"><canvas class="chart" id="bmdChart"></canvas><div class="legend" id="bmdLegend"></div></div>
     </section>
   </div>
@@ -156,8 +155,7 @@
 <!-- ############################## floating: fx calculation window ############################## -->
 <!-- hidden until you press one of the fx buttons. runner.py does the maths, app.js lays it out -->
 <aside class="panel" id="calc" hidden>
-  <header class="panel-title" id="calcHead"><span class="title-text">ƒx Calculation details</span><span class="spacer"></span>
-    <span class="hint">drag to move · corner to resize</span>
+  <header class="panel-title" id="calcHead"><span class="title-text">Calculation details</span><span class="spacer"></span>
     <button class="icon-btn min-btn" title="Minimize">–</button>
     <button class="icon-btn" id="calcClose" title="Close">×</button></header>
   <div class="panel-body">
@@ -180,8 +178,8 @@
 <!-- ############################## floating: 2d cross-section editor ############################## -->
 <!-- hidden until you press "edit section in 2D" or a pencil on a row -->
 <aside class="panel" id="secEd" hidden>
-  <header class="panel-title" id="secEdHead"><span class="title-text">✎ Cross-section editor</span><span class="spacer"></span>
-    <span class="hint">drag the orange handles · Shift = 0.1 mm steps</span>
+  <header class="panel-title" id="secEdHead"><span class="title-text">Cross-section editor</span><span class="spacer"></span>
+    <span class="hint">Shift = 0.1 mm steps</span>
     <button class="icon-btn min-btn" title="Minimize">–</button>
     <button class="icon-btn" id="secEdClose" title="Close">×</button></header>
   <div class="panel-body sec-body">
@@ -198,10 +196,9 @@
         <div class="stepper" data-k="nw"><span>Web layers</span><button data-d="-1">−</button><output></output><button data-d="1">+</button></div>
         <div class="stepper" data-k="glue"><span>Glue tab layers <em>(all rows)</em></span><button data-d="-1">−</button><output></output><button data-d="1">+</button></div>
       </div>
-      <h5>Section properties <span class="hint">from algorithm.py</span></h5>
+      <h5>Section properties</h5>
       <div id="secProps" class="sec-props"></div>
       <div id="secErrs"></div>
-      <p class="note">Folded-down deck edges aren't in algorithm.py yet, so they're left out here. The code for them is written and commented out in <code>public/section-extras.js</code>.</p>
     </div>
   </div>
 </aside>

@@ -476,8 +476,8 @@ function showResults(d) {
   const v = $("verdict");
   v.className = "verdict " + (d.min_fos < 1 ? "bad" : "good");
   v.textContent = d.min_fos < 1
-    ? `FOS ${fmt(d.min_fos, 3)} < 1: this ${fmt(d.train_total, 0)} N train would break the bridge. It can carry a train of about ${fmt(d.p_fail, 0)} N (= ${fmt(d.min_fos, 3)} × ${fmt(d.train_total, 0)} N).`
-    : `FOS ${fmt(d.min_fos, 3)} ≥ 1: carries this ${fmt(d.train_total, 0)} N train. Predicted failure when the train weighs about ${fmt(d.p_fail, 0)} N (= ${fmt(d.min_fos, 3)} × ${fmt(d.train_total, 0)} N).`;
+    ? `Fails under this ${fmt(d.train_total, 0)} N train.`
+    : `Carries this ${fmt(d.train_total, 0)} N train.`;
   const minP = d.p_fail;
   $("modes").innerHTML = [...d.modes].sort((a, b) => (a.p_fail ?? Infinity) - (b.p_fail ?? Infinity)).map((m) => {
     const u = m.p_fail ? Math.max(2, (minP / m.p_fail) * 100) : 0;
@@ -504,7 +504,7 @@ function showPosition(err) {
   set("roRB", `${fmt(pos.RB, 1)} N`);
   set("roV", onCount ? `${fmt(pos.Vmax, 1)} N @ ${fmt(pos.Vmax_x, 0)}` : "0");
   set("roM", onCount ? `${fmt(pos.Mmax / 1000, 1)} N·m @ ${fmt(pos.Mmax_x, 0)}` : "0");
-  $("roFos").textContent = pos.min_fos == null ? "—" : `${fmt(pos.min_fos, 3)} · ${MODE_LABEL[pos.mode] || pos.mode} → ${fmt(pos.p_fail, 0)} N`;
+  $("roFos").textContent = pos.min_fos == null ? "—" : `${fmt(pos.min_fos, 3)}`;
   $("roFos").title = pos.min_fos == null ? "" : `If the train stayed here, it would fail at ${fmt(pos.p_fail, 1)} N total by ${pos.mode} at x = ${fmt(pos.x_fail, 0)} mm`;
   drawCharts();
 }
@@ -576,7 +576,9 @@ function chart(cv, legendEl, opt) {
   g.fillText(opt.tick(bot), 10, h - 4);
   g.textAlign = "right"; g.fillText(opt.unit, w - 10, 11); g.textAlign = "left";
   const items = [{ name: "All train positions", color: "#bbb" }, ...(opt.here ? [{ name: "Train here", color: C.here }] : []), ...opt.series];
-  legendEl.innerHTML = items.map((s) => `<span><i style="background:${s.color}"></i>${s.name}</span>`).join("");
+  legendEl.innerHTML = ""; g.textAlign = "right";
+  items.forEach((s) => { const ys = s.name === "Train here" ? opt.here : s.y; const v = ys && [...ys].reverse().find((y) => y != null); if (v == null) return; g.fillStyle = s.color; g.fillText(s.name, w - pad.r - 2, clampY(v)); });
+  g.textAlign = "left";
   cv._st = { opt, pad, w, legendEl };
 }
 
@@ -800,8 +802,8 @@ async function loadCalc(scroll) {
 // turns runner.py's sections/steps/tables into html. all the maths lives in runner.py, this only lays it out
 function renderCalc(d) {
   $("calcIntro").textContent = d.source === "pos"
-    ? `Train parked with its lead wheel at ${fmt(lead, 0)} mm. Every number below comes from algorithm.py's own functions at x = ${fmt(d.x, 0)} mm.`
-    : `Moving train: the program tries every train position and keeps the worst shear and moment at each x (the envelope). Every number below comes from algorithm.py's own functions at x = ${fmt(d.x, 0)} mm.`;
+    ? `Train parked with its lead wheel at ${fmt(lead, 0)} mm, x = ${fmt(d.x, 0)} mm.`
+    : `Moving train envelope, x = ${fmt(d.x, 0)} mm.`;
   const hlIdx = calc.mode ? MODE_ORDER.indexOf(calc.mode) : null;
   const table = (t, hl) => !t ? "" : `<div class="table-wrap"><table class="mono"><thead><tr>${t.head.map((h) => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${
     t.rows.map((r, i) => `<tr class="${i === hl ? "hl" : ""}">${r.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody>${
