@@ -182,7 +182,7 @@ def applied_stress(SFD, BMD, ybot, ytop, I, Qcent, Qglue, tw, bg, tft):
     T_cent = SFD * Qcent / (I * 2 * tw)
     T_glue = SFD * Qglue / (I * 2 * (bg + tw))
     S_web = BMD * (ytop - tft) / I
-    return S_top, S_bot, T_cent, T_glue
+    return S_top, S_bot, T_cent, T_glue, S_web
 
 ############################## matlab sec. 5 ##############################
 # 5. Material and Thin Plate Buckling Capacities
