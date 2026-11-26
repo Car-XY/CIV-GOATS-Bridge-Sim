@@ -1,8 +1,7 @@
-import sys # command line arguments
 import numpy as np
 import matplotlib.pyplot as plt
 
-############################## matlab sec. 0 ##############################
+#################### matlab sec. 0 ####################
 # 0. Initialize Parameters
 
 L = 1200 
@@ -22,7 +21,7 @@ TAU_GLUE = 2.0
 SHEET_AREA = 813 * 1016
 SHEET_MASS_G = 750.0
 
-############################## matlab sec. 1 ##############################
+#################### matlab sec. 1 ####################
 # 1. SFD, BMD under train loading
 
 # returns (wheel_offsets, wheel_loads) for the given load case
@@ -100,7 +99,7 @@ def envelopes(x, wheel_offsets, wheel_loads, L, step=1):
 
     return SFD, BMD, np.array(SFDi), np.array(BMDi)
 
-############################## matlab sec. 2 ##############################
+#################### matlab sec. 2 ####################
 # 2. Define Bridge Parameters
 
 def bridge_parameters(x):
@@ -134,10 +133,9 @@ def bridge_parameters(x):
     a = np.interp(x, param[:, 0], param[:, 10])
     return bft, tft, bfb, tfb, hw, tw, bg, tg, sw, a
 
-    # NOTE: Currently unfinished. Default values are from Design 0
-    # right now this is simply initializing our parameters with defaults
+    # MODIFY THESE PARAMETERS TO TEST OUT DIFFERENT BRIDGES.
 
-############################## matlab sec. 3 ##############################
+#################### matlab sec. 3 ####################
 # 3. Calculate Sectional Properties
 
 def sectional_properties(bft, tft, bfb, tfb, hw, tw, bg, tg):
@@ -173,7 +171,7 @@ def sectional_properties(bft, tft, bfb, tfb, hw, tw, bg, tg):
 
     return ybar, ybot, ytop, I, Qcent, Qglue
 
-############################## matlab sec. 4 ##############################
+#################### matlab sec. 4 ####################
 # 4. Calculate Applied Stress
 
 def applied_stress(SFD, BMD, ybot, ytop, I, Qcent, Qglue, tw, bg, tft):
@@ -184,7 +182,7 @@ def applied_stress(SFD, BMD, ybot, ytop, I, Qcent, Qglue, tw, bg, tft):
     S_web = BMD * (ytop - tft) / I
     return S_top, S_bot, T_cent, T_glue, S_web
 
-############################## matlab sec. 5 ##############################
+#################### matlab sec. 5 ####################
 # 5. Material and Thin Plate Buckling Capacities
 
 def capacities(bft, tft, tw, hw, sw, a, ytop):
@@ -201,7 +199,7 @@ def capacities(bft, tft, tw, hw, sw, a, ytop):
     T_buck = 5 * buck_const * ((tw / hw) ** 2 + (tw / a) ** 2)
     return S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck
 
-############################## matlab sec. 6 ##############################
+#################### matlab sec. 6 ####################
 # 6. FOS
 
 def factors_of_safety(S_top, S_bot, T_cent, T_glue, S_web, S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck):
@@ -217,7 +215,7 @@ def factors_of_safety(S_top, S_bot, T_cent, T_glue, S_web, S_tens, S_comp, T_max
 
     # note: S_top is the worst compressive stress at the top face, S_bot is the worst tensile stress at the bottom face
 
-############################## matlab sec. 7 ##############################
+#################### matlab sec. 7 ####################
 # 7. Min FOS and the failure load Pfail
 
 def failure_load(FOS_tens, FOS_comp, FOS_shear, FOS_glue,
@@ -246,7 +244,7 @@ def failure_load(FOS_tens, FOS_comp, FOS_shear, FOS_glue,
     # weakest is a string containing the TYPE of the failure load (ie. "FOS_comp")
     # x is position at which this failure load occurs
 
-############################## matlab sec. 8 ##############################
+#################### matlab sec. 8 ####################
 # 8. Vfail and Mfail
 
 def failure_envelopes(S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, T_buck, I, ybot, ytop, Qcent, Qglue, tw, bg, tft):
@@ -260,7 +258,7 @@ def failure_envelopes(S_tens, S_comp, T_max, T_gmax, S_buck1, S_buck2, S_buck3, 
     Vf_buckV = T_buck * I * 2 * tw / Qcent
     return Mf_tens, Mf_comp, Vf_shear, Vf_glue, Mf_buck1, Mf_buck2, Mf_buck3, Vf_buckV
 
-############################## matlab sec. 9 ##############################
+#################### matlab sec. 9 ####################
 # 9. Output plots of Vfail and Mfail
 
 # draws a shear subplot
@@ -295,7 +293,7 @@ def moment_subplot(pos, x, BMDi, Mfs, labels, title=None, every=100):
     if title:
         plt.title(title, fontweight="bold")
 
-# draws the subplots shown below matlab pseudocode
+# draws the 6 subplots shown below, as required in the assignment instructions
 def output_plots(x, SFDi, BMDi, Mf_tens, Mf_comp, Vf_shear, Vf_glue, Mf_buck1, Mf_buck2, Mf_buck3, Vf_buckV, filename=None):
     plt.figure(figsize=(16, 9))
 

@@ -1,3 +1,7 @@
+% this fixes something. something indeed. yes.
+% (row colors in tables)
+\usepackage{colortbl}
+
 % fix spacing
 \RedeclareSectionCommand[beforeskip=-2.8ex plus -0.8ex minus -0.2ex, afterskip=1.2ex plus 0.2ex]{section}
 \RedeclareSectionCommand[beforeskip=-2.6ex plus -0.8ex minus -0.2ex, afterskip=1.0ex plus 0.2ex]{subsection}
@@ -51,11 +55,13 @@
 
 % thanks again tex exchange 
 % colors are from one light theme for vscode
+\newlength{\btCodeGrow}
+\AtBeginDocument{\setlength{\btCodeGrow}{\dimexpr(\paperwidth-\textwidth)/4\relax}}
 \usepackage{minted}
 \colorlet{CodeBg}{HeadSlate}
 \setminted{linenos, xleftmargin=1.4em, numbersep=8pt, fontsize=\small, breaklines, autogobble, style=one-dark}
 \renewcommand{\theFancyVerbLine}{\sffamily\scriptsize\color[RGB]{157,157,159}\arabic{FancyVerbLine}}
-\AddToHook{env/minted/before}{\begin{tcolorbox}[btbox, colback=CodeBg!5, colframe=CodeBg!25, boxrule=0.5pt, arc=2pt, left=4pt, top=2pt, bottom=2pt]}
+\AddToHook{env/minted/before}{\begin{tcolorbox}[btbox, colback=CodeBg!5, colframe=CodeBg!25, boxrule=0.5pt, arc=2pt, left=4pt, top=2pt, bottom=2pt, grow to left by=\btCodeGrow, grow to right by=\btCodeGrow]}
 \AddToHook{env/minted/after}{\end{tcolorbox}}
 \NewCommandCopy{\btOrigTextcolor}{\textcolor}
 \newcommand{\btOneLight}[2]{\expandafter\def\csname btOL:#1\endcsname{#2}}
