@@ -45,15 +45,13 @@ Case & Failure mode & Applied (MPa) & Crit (MPa) & FOS \\
 \end{note}
 
 \newpage
-\section{Evidence of Programming} \vspace{-0.5em} % :( having to do this saddens me
-\subsection{Basic Calculations Output} \vspace{-0.5em}
+\section{Evidence of Programming}
+\subsection{Design 0}
 Here is the code output of \textbf{all intermediate calculations} performed in the hand calculations of Design 0 under a moving $400\unit{N}$ train according to Load Case 1. You can also see the code output for all \textbf{FoS values} along the bridge for Load Case 1.
 \begin{center}
     \includegraphics[width=\linewidth]{../images/codeoutput-1.png}
 \end{center}
-\vspace{-1em}
-\subsection{Matplotlib Output} \vspace{-0.5em}
-Here is a graphical presentation of all \textbf{shear force capacities} and \textbf{bending moment capacities} of Design 0 for Load Case 1. \vspace{-0.5em}
+Here is a graphical presentation of all \textbf{shear force capacities} and \textbf{bending moment capacities} of Design 0 for Load Case 1.
 \begin{center}
     \makebox[\linewidth][c]{\includegraphics[width=\dimexpr\linewidth+2\btCodeGrow\relax]{../images/plots1a.png}}
 \end{center}
@@ -62,25 +60,27 @@ Here is a graphical presentation of all \textbf{shear force capacities} and \tex
 \end{center}
 
 \subsection{Our Design}
-\begin{note}
-    Here is the code output of all \textbf{FoS values} and a graphical presentation of all \textbf{shear force capacities} and \textbf{bending moment capaticies} for our final design under Load Case 2.
-\end{note}
-\vspace{-1em}
-\paragraph{Code output} 
-Code output goes here
+\textbf{[TEMP]} Here the code output for all \textbf{FoS values} along the bridge for Load Case 2.
+\begin{center}
+    \includegraphics[width=\linewidth]{../images/co1copy.png}
+\end{center}
 
-\paragraph{Matplotlib output}
-Matplotlib output goes here
+\textbf{[TEMP]} Here is a graphical presentation of all \textbf{shear force capacities} and \textbf{bending moment capacities} of our design for Load Case 2.
+\begin{center}
+    \makebox[\linewidth][c]{\includegraphics[width=\dimexpr\linewidth+2\btCodeGrow\relax]{../images/plots1a.png}}
+\end{center}
+\begin{center}
+    \makebox[\linewidth][c]{\includegraphics[width=\dimexpr\linewidth+2\btCodeGrow\relax]{../images/plots1b.png}}
+\end{center}
 
 \subsection{Our Scripts}
 \begin{foreword}
     The repository containing all of our \mintinline{text}{.py} and \mintinline{text}{.tex} files can be found \href{https://github.com/Car-XY/CIV-GOATS-Bridge-Sim}{here}. We also built a frontend for our program, which has been deployed \href{https://car-xy.github.io/CIV-GOATS-Bridge-Sim/}{here}.
 \end{foreword}
-\vspace{-1em}
 \paragraph{Script 1.} Here is our main script, \mintinline{text}{algorithm.py}, which contains all of the required functions as per the MATLAB pseudocode. The libraries we used were NumPy and Matplotlib.
 \input{algorithm.tex}
 
-\paragraph{Script 2.} Here is our helper script, \mintinline{text}{calc.py} which outputs all of the results
+\paragraph{Script 2.} Here is our helper script, \mintinline{text}{calc.py}, which outputs all of the results
 \input{calc.tex} 
 
 \end{document}
