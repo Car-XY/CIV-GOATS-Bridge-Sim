@@ -6,9 +6,6 @@
 \begin{document}
 \ihead{\textsc{Team 809}}
 \maketitle
-\begin{foreword}
-    The style for this document is a heavily modified version of \href{https://github.com/vEnhance}{Evan Chen}'s \texttt{evan.sty}. Attribution is included in the \texttt{.sty} file for this document, as required. 
-\end{foreword}
 \tableofcontents
 
 \newpage
@@ -41,14 +38,15 @@
     This is the code output of all \textbf{FoS values} along the bridge for Load Case 1 and for our final design under Load Case 2.
 \end{note}
 
-\subsection{Our Script}
+\subsection{Our Scripts}
 \begin{foreword}
-    The repository containing all of our \mintinline{text}{.py} and \mintinline{text}{.tex} files can be found \href{https://github.com/Car-XY/CIV-GOATS-Bridge-Sim}{here}. We also built a frontend for our program, which can be found \href{https://example.com}{here}.
+    The repository containing all of our \mintinline{text}{.py} and \mintinline{text}{.tex} files can be found \href{https://github.com/Car-XY/CIV-GOATS-Bridge-Sim}{here}. We also built a frontend for our program, which has been deployed \href{https://car-xy.github.io/CIV-GOATS-Bridge-Sim/}{here}.
 \end{foreword}
 
-Here is our script.
-\begin{minted}{python}
-    # Code goes here.
-\end{minted}
+Here is our main script, \mintinline{text}{algorithm.py}, which contains all of the required functions as per the MATLAB pseudocode. The libraries we used were NumPy and Matplotlib.
+\input{algorithm.tex}
+
+Here is our helper script, \mintinline{text}{calc.py} which outputs all of the results
+\input{calc.tex} 
 
 \end{document}
